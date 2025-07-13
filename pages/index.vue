@@ -24,7 +24,7 @@
 
           <div class="main__sidebar sidebar" >
             <div class="sidebar__personal">
-              <p class="sidebar__personal-name">Sergey.Ivanov</p>
+              <p class="sidebar__personal-name">Sergey.Ivanov123</p>
               <div class="sidebar__icon">
                 <svg>
                   <use xlink:href="#logout"></use>
