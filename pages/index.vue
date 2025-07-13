@@ -22,7 +22,7 @@
             <PlaylistComponent />
           </div>
 
-          <div class="main__sidebar sidebar">
+          <div class="main__sidebar sidebar" >
             <div class="sidebar__personal">
               <p class="sidebar__personal-name">Sergey.Ivanov</p>
               <div class="sidebar__icon">
