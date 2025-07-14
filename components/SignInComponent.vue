@@ -5,7 +5,7 @@
           <form class="modal__form-login">
             <a href="../">
               <div class="modal__logo">
-                <img src="../img/logo_modal.png" alt="logo" />
+                <img src="/assets/img/logo_modal.png" alt="logo" >
               </div>
             </a>
             <input
@@ -13,19 +13,19 @@
               type="text"
               name="login"
               placeholder="Почта"
-            />
+            >
             <input
               class="modal__input password-first"
               type="password"
               name="password"
               placeholder="Пароль"
-            />
+            >
             <input
               class="modal__input password-double"
               type="password"
               name="password"
               placeholder="Повторите пароль"
-            />
+            >
             <button class="modal__btn-signup-ent">
               <a href="../index.html">Зарегистрироваться</a>
             </button>
@@ -40,65 +40,6 @@
 </script>
 
 <style lang="scss" scoped>
-* {
-  margin: 0;
-  padding: 0;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-*:before,
-*:after {
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-a,
-a:visited {
-  text-decoration: none;
-  font-family: "StratosSkyeng", sans-serif;
-  cursor: pointer;
-}
-
-button,
-._btn {
-  cursor: pointer;
-}
-
-ul li {
-  list-style: none;
-}
-
-@font-face {
-  font-family: "StratosSkyeng";
-  src: local("StratosSkyeng"), local("StratosSkyeng"),
-    url("../fonts/StratosSkyeng.woff2") format("woff2"),
-    url("../fonts/StratosSkyeng.woff") format("woff"),
-    url("../fonts/StratosSkyeng.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-}
-
-html,
-body {
-  width: 100%;
-  height: 100%;
-  font-family: "StratosSkyeng", sans-serif;
-}
-
-.wrapper {
-  width: 100%;
-  min-height: 100%;
-  overflow: hidden;
-}
-
-.container-enter {
-  max-width: 100%;
-  height: 100vh;
-  margin: 0 auto;
-  position: relative;
-  background-color: rgba(0, 0, 0, 0.85);
-}
 
 .modal__btn-enter:hover {
   background-color: #3f007d;

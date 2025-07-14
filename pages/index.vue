@@ -7,14 +7,14 @@
           <div class="main__centerblock centerblock">
             <div class="centerblock__search search">
               <svg class="search__svg">
-                <use xlink:href="#icon-search"></use>
+                <use xlink:href="#icon-search"/>
               </svg>
               <input
                 class="search__text"
                 type="search"
                 placeholder="Поиск"
                 name="search"
-              />
+              >
             </div>
             <h2 class="centerblock__h2">Треки</h2>
             <FilterControlsComponent />
@@ -27,7 +27,7 @@
               <p class="sidebar__personal-name">Sergey.Ivanov</p>
               <div class="sidebar__icon">
                 <svg>
-                  <use xlink:href="#logout"></use>
+                  <use xlink:href="#logout"/>
                 </svg>
               </div>
             </div>
@@ -39,7 +39,7 @@
                       class="sidebar__img"
                       src="/assets/img/playlist01.png"
                       alt="day's playlist"
-                    />
+                    >
                   </a>
                 </div>
                 <div class="sidebar__item">
@@ -48,7 +48,7 @@
                       class="sidebar__img"
                       src="/assets/img/playlist02.png"
                       alt="day's playlist"
-                    />
+                    >
                   </a>
                 </div>
                 <div class="sidebar__item">
@@ -57,7 +57,7 @@
                       class="sidebar__img"
                       src="/assets/img/playlist03.png"
                       alt="day's playlist"
-                    />
+                    >
                   </a>
                 </div>
               </div>
@@ -68,7 +68,7 @@
 
 <PlayerBarComponent />
 
-        <footer class="footer"></footer>
+        <footer class="footer"/>
       </div>
     </div>
 </template>
