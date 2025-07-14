@@ -1,31 +1,44 @@
 <template>
   <nav class="main__nav nav">
-            <div class="nav__logo logo">
-              <img class="logo__image" src="/assets/img/logo.png" />
-            </div>
-            <div class="nav__burger burger">
-              <span class="burger__line"></span>
-              <span class="burger__line"></span>
-              <span class="burger__line"></span>
-            </div>
-            <div class="nav__menu menu">
-              <ul class="menu__list">
-                <li class="menu__item">
-                  <a href="#" class="menu__link">Главное</a>
-                </li>
-                <li class="menu__item">
-                  <a href="#" class="menu__link">Мой плейлист</a>
-                </li>
-                <li class="menu__item">
-                  <a href="../signin.html" class="menu__link">Войти</a>
-                </li>
-              </ul>
-            </div>
-          </nav>
+    <div class="nav__logo logo">
+      <img class="logo__image" src="/assets/img/logo.png" />
+    </div>
+    <div 
+      class="nav__burger burger"
+      @click="toggleMenu"
+    >
+      <span class="burger__line"></span>
+      <span class="burger__line"></span>
+      <span class="burger__line"></span>
+    </div>
+    <div 
+      class="nav__menu menu"
+      :class="{ 'menu--visible': isMenuVisible }"
+    >
+      <ul class="menu__list">
+        <li class="menu__item">
+          <a href="#" class="menu__link">Главное</a>
+        </li>
+        <li class="menu__item">
+          <a href="#" class="menu__link">Мой плейлист</a>
+        </li>
+        <li class="menu__item">
+          <a href="../signin.html" class="menu__link">Войти</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 
+//Меню
+const isMenuVisible = ref(false)
+
+const toggleMenu = () => {
+  isMenuVisible.value = !isMenuVisible.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -48,23 +61,21 @@
   width: 20px;
   height: 36px;
   padding: 13px 0;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-  -ms-flex-direction: column;
   flex-direction: column;
-  -webkit-box-pack: justify;
-  -ms-flex-pack: justify;
   justify-content: space-between;
+  cursor: pointer;
 }
 
 .nav__menu {
-  display: block;
-  visibility: visible;
+  display: none;
+  background-color: #181818;
+  padding: 20px;
+  
+  &.menu--visible {
+    display: block;
+  }
 }
-
 
 .logo__image {
   width: 113.33px;
