@@ -1,7 +1,7 @@
 <template>
   <nav class="main__nav nav">
     <div class="nav__logo logo">
-      <img class="logo__image" src="/assets/img/logo.png" />
+      <img class="logo__image" src="/assets/img/logo.png">
     </div>
     <div 
       class="nav__burger burger"
@@ -17,13 +17,13 @@
     >
       <ul class="menu__list">
         <li class="menu__item">
-          <a href="#" class="menu__link">Главное</a>
+          <a href="/" class="menu__link">Главное</a>
         </li>
         <li class="menu__item">
           <a href="#" class="menu__link">Мой плейлист</a>
         </li>
         <li class="menu__item">
-          <a href="../signin.html" class="menu__link">Войти</a>
+          <a href="/SignIn" class="menu__link">Войти</a>
         </li>
       </ul>
     </div>
