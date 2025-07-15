@@ -68,19 +68,18 @@
 
 <PlayerBarComponent />
 
-        <footer class="footer"/>
+        <footer class="footer"> </footer>
       </div>
     </div>
 </template>
 <script setup>
-import { provide, ref } from 'vue';
-import { getTracks } from './public/tracks';
+
 import NavbarComponent from '~/components/NavbarComponent.vue';
 import PlaylistComponent from '~/components/PlaylistComponent.vue';
 import FilterControlsComponent from '~/components/FilterControlsComponent.vue';
 
 
-const tracks = ref([])
+/* const tracks = ref([])
 const loadTracks = async () => {
   try {
     const data = await getTracks()
@@ -94,7 +93,7 @@ const loadTracks = async () => {
 provide('tracks', tracks)
 
 // Загружаем треки при создании компонента
-loadTracks()
+loadTracks() */
 </script>
 <style>
 

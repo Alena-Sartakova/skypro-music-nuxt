@@ -1,32 +1,56 @@
 <template>
-            <div class="centerblock__content playlist-content">
-              <div class="content__title playlist-title">
-                <div class="playlist-title__col col01">Трек</div>
-                <div class="playlist-title__col col02">Исполнитель</div>
-                <div class="playlist-title__col col03">Альбом</div>
-                <div class="playlist-title__col col04">
-                  <svg class="playlist-title__svg">
-                    <use xlink:href="#icon-watch"></use>
-                  </svg>
-                </div>
-              </div>
-              <div class="content__playlist playlist">
-
-<TrackComponent v-for="track in tracks" :key="track.id" :track="track"/>
-
-              </div>
-            </div>
+ <div class="centerblock__content playlist-content">
+  <!-- Заголовок таблицы -->
+  <div class="content__title playlist-title">
+   <!-- колонки -->
+  </div>
+  
+  <!-- Контент -->
+  <div class="content__playlist playlist">
+   <TrackComponent 
+    v-for="track in validTracks" 
+    :key="track.id" 
+    :track="track"
+   />
+  </div>
+  
+  <!-- Состояние загрузки -->
+  <div v-if="pending" class="loading">
+   Загрузка треков...
+  </div>
+  
+  <!-- Ошибка -->
+  <div v-if="error" class="error">
+   Ошибка: {{ error.message }}
+  </div>
+ </div>
 </template>
 
 <script setup>
-import { inject } from 'vue';
-import TrackComponent from './TrackComponent.vue';
+const { 
+ data: response, 
+ pending, 
+ error,
+} = await useFetch(
+ 'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/',
+ {
+ transform: (responseData) => {
+ const processedTracks = responseData.data.map((track) => ({
+ id: track._id,
+ title: track.title || 'Без названия',
+ author: track.artist || 'Неизвестный исполнитель',
+ album: track.album || 'Без альбома',
+ duration: track.duration || 0,
+ track_file: track.track_file || ''
+ })).filter(Boolean);
+ return processedTracks;
+ }
+ }
+);
 
-
-const tracks = inject('tracks')
-
-
+const validTracks = computed(() => response.value || []);
 </script>
+
 
 <style lang="scss" scoped>
 .content__playlist {
@@ -55,4 +79,19 @@ const tracks = inject('tracks')
 .col02 { width: 321px; }
 .col03 { width: 245px; }
 .col04 { width: 60px; text-align: end; }
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 1.2em;
+}
+
+.error {
+  padding: 20px;
+  color: #ff4444;
+  background: #ffecec;
+  border-radius: 8px;
+  margin: 20px;
+  text-align: center;
+}
 </style>
