@@ -47,10 +47,6 @@ const {
  }
  }
 );
-const { data: rawResponse } = await useFetch(
-  'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/'
-);
-console.log('Raw server response:', rawResponse.value);
 
 const validTracks = computed(() => response.value || []);
 </script>
