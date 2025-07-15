@@ -11,7 +11,7 @@
           <a class="track__title-link" href="http://">
             {{ track.title }}
             <!-- Добавляем проверку на наличие ремикса -->
-            <span v-if="track.title.includes('(Remix)')" class="track__title-span">(Remix)</span>
+
           </a>
         </div>
       </div>

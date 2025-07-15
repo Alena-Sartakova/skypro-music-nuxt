@@ -37,7 +37,7 @@ const {
  transform: (responseData) => {
  const processedTracks = responseData.data.map((track) => ({
  id: track._id,
- title: track.title || 'Без названия',
+ title: track.name || 'Без названия',
  author: track.artist || 'Неизвестный исполнитель',
  album: track.album || 'Без альбома',
  duration: track.duration || 0,
@@ -47,6 +47,10 @@ const {
  }
  }
 );
+const { data: rawResponse } = await useFetch(
+  'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/'
+);
+console.log('Raw server response:', rawResponse.value);
 
 const validTracks = computed(() => response.value || []);
 </script>
