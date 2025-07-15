@@ -2,7 +2,9 @@
  <div class="centerblock__content playlist-content">
   <!-- Заголовок таблицы -->
   <div class="content__title playlist-title">
-   <!-- колонки -->
+    <div class="playlist-title__col col01">Трек</div>
+    <div class="playlist-title__col col02">Исполнитель</div>
+    <div class="playlist-title__col col03">Альбом</div>
   </div>
   
   <!-- Контент -->
@@ -27,26 +29,36 @@
 </template>
 
 <script setup>
+const { data: rawResponse } = await useFetch(
+  'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/'
+);
+console.log('Raw server response:', rawResponse.value);
+
 const { 
  data: response, 
  pending, 
  error,
-} = await useFetch(
+} = useFetch(
  'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/',
  {
  transform: (responseData) => {
- const processedTracks = responseData.data.map((track) => ({
+ return responseData.data.map(track => ({
  id: track._id,
- title: track.name || 'Без названия',
- author: track.artist || 'Неизвестный исполнитель',
- album: track.album || 'Без альбома',
- duration: track.duration || 0,
- track_file: track.track_file || ''
- })).filter(Boolean);
- return processedTracks;
+ title: track.name?.trim() || 'Без названия',
+ author: track.author || 'Неизвестный исполнитель',
+ album: track.album?.trim() || 'Без альбома',
+ duration: formatDuration(track.duration_in_seconds)
+ }))
  }
  }
 );
+
+const formatDuration = (seconds) => {
+ if (!seconds || isNaN(seconds)) return '0:00';
+ const minutes = Math.floor(seconds / 60);
+ const remainingSeconds = seconds % 60;
+ return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
 
 const validTracks = computed(() => response.value || []);
 </script>
