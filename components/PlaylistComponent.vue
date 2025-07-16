@@ -10,7 +10,7 @@
   <!-- Контент -->
   <div class="content__playlist playlist">
    <TrackComponent 
-    v-for="track in validTracks" 
+    v-for="track in tracks" 
     :key="track.id" 
     :track="track"
    />
@@ -29,38 +29,20 @@
 </template>
 
 <script setup>
-const { data: rawResponse } = await useFetch(
-  'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/'
-);
-console.log('Raw server response:', rawResponse.value);
-
-const { 
- data: response, 
- pending, 
- error,
-} = useFetch(
- 'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/',
- {
- transform: (responseData) => {
- return responseData.data.map(track => ({
- id: track._id,
- title: track.name?.trim() || 'Без названия',
- author: track.author || 'Неизвестный исполнитель',
- album: track.album?.trim() || 'Без альбома',
- duration: formatDuration(track.duration_in_seconds)
- }))
- }
- }
-);
-
-const formatDuration = (seconds) => {
- if (!seconds || isNaN(seconds)) return '0:00';
- const minutes = Math.floor(seconds / 60);
- const remainingSeconds = seconds % 60;
- return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
-
-const validTracks = computed(() => response.value || []);
+defineProps({
+  tracks: {
+    type: Array,
+    default: () => []
+  },
+  pending: {
+    type: Boolean,
+    default: false
+  },
+  error: {
+    type: Object,
+    default: null
+  }
+});
 </script>
 
 
