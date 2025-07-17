@@ -11,13 +11,15 @@
       >
         исполнителю
       </div>
-      <div v-show="activeFilter === 'author'" class="filter__dropdown">
-        <ul class="filter__list">
-          <li v-for="item in authorItems" :key="item" class="filter__item">
-            {{ item }}
-          </li>
-        </ul>
-      </div>
+      <transition name="fade">
+        <div v-if="activeFilter === 'author'" class="filter__dropdown">
+          <ul class="filter__list">
+            <li v-for="item in authorItems" :key="item" class="filter__item">
+              {{ item }}
+            </li>
+          </ul>
+        </div>
+      </transition>
     </div>
 
     <!-- Фильтр по году -->
@@ -29,13 +31,15 @@
       >
         году выпуска
       </div>
-      <div v-show="activeFilter === 'year'" class="filter__dropdown">
-        <ul class="filter__list">
-          <li v-for="item in yearItems" :key="item" class="filter__item">
-            {{ item }}
-          </li>
-        </ul>
-      </div>
+      <transition name="fade">
+        <div v-if="activeFilter === 'year'" class="filter__dropdown">
+          <ul class="filter__list">
+            <li v-for="item in yearItems" :key="item" class="filter__item">
+              {{ item }}
+            </li>
+          </ul>
+        </div>
+      </transition>
     </div>
 
     <!-- Фильтр по жанру -->
@@ -47,19 +51,20 @@
       >
         жанру
       </div>
-      <div v-show="activeFilter === 'genre'" class="filter__dropdown">
-        <ul class="filter__list">
-          <li v-for="item in genreItems" :key="item" class="filter__item">
-            {{ item }}
-          </li>
-        </ul>
-      </div>
+      <transition name="fade">
+        <div v-if="activeFilter === 'genre'" class="filter__dropdown">
+          <ul class="filter__list">
+            <li v-for="item in genreItems" :key="item" class="filter__item">
+              {{ item }}
+            </li>
+          </ul>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
 
 const props = defineProps({
   tracks: {
@@ -112,11 +117,6 @@ const sortItems = (arr, unknownWord, isNumeric = false) => {
     return isNumeric ? Number(b) - Number(a) : a.localeCompare(b);
   });
 };
-
-// Отладка
-onMounted(() => {
-  console.log("Tracks data:", props.tracks);
-});
 </script>
 
 <style lang="scss" scoped>
@@ -157,7 +157,6 @@ onMounted(() => {
   left: 0;
   z-index: 1000;
   background: #313131;
-
   padding: 15px;
   max-height: 300px;
   overflow-y: auto;
@@ -181,5 +180,14 @@ onMounted(() => {
       background: rgba(255, 255, 255, 0.1);
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
