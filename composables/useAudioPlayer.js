@@ -14,28 +14,30 @@ export function useAudioPlayer() {
   };
 
   // Воспроизведение трека
-  const playTrack = async (track) => {
-    if (!playerStore.audioRef) {
-      console.error("Плеер не инициализирован");
-      return;
-    }
-
-    try {
+const playTrack = async (track) => {
+  try {
+    if (playerStore.currentTrack?.id !== track.id) {
       playerStore.setCurrentTrack(track);
       playerStore.audioRef.src = track.track_file;
-      await playerStore.audioRef.play();
-      playerStore.setPlaying(true);
-    } catch (error) {
-      console.error("Ошибка воспроизведения:", error);
-      playerStore.setPlaying(false);
     }
-  };
-
+    
+    // Всегда используем актуальное currentTime из хранилища
+    playerStore.audioRef.currentTime = playerStore.currentTime; // <-- Важно
+    await playerStore.audioRef.play();
+    playerStore.setPlaying(true);
+  } catch (error) {
+    console.error("Ошибка воспроизведения:", error);
+    playerStore.setPlaying(false);
+  }
+};
 // Пауза трека
 const pauseTrack = () => {
   if (playerStore.audioRef) {
     playerStore.audioRef.pause();
-    playerStore.setPlaying(false)
+    playerStore.setPlaying(false);
+    
+    // Сохраняем текущее время через метод хранилища
+    playerStore.setCurrentTime(playerStore.audioRef.currentTime);
   }
 };
 
@@ -60,9 +62,12 @@ const handleTimeUpdate = () => {
   // Перемотка
 const seekTo = (percentage) => {
   if (!playerStore.audioRef || !playerStore.currentTrack) return;
-
+  
   const newTime = (percentage / 100) * playerStore.audioRef.duration;
   playerStore.audioRef.currentTime = newTime;
+  
+  // Обновляем текущее время в хранилище сразу при перемотке
+  playerStore.setCurrentTime(newTime); // <-- Ключевое изменение
   playerStore.setProgress(percentage);
 };
 

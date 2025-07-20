@@ -14,6 +14,7 @@ export const usePlayerStore = defineStore("player", {
     volume: 50,
     // Ссылка на аудиотег
     audioRef: null,
+    currentTime: 0,
   }),
 
   actions: {
@@ -40,6 +41,10 @@ export const usePlayerStore = defineStore("player", {
     // Установить состояние воспроизведения
     setPlaying(isPlaying) {
       this.isPlaying = isPlaying;
+    },
+
+        setCurrentTime(time) {
+      this.currentTime = time;
     },
 
     // Установить ссылку на аудиоэлемент

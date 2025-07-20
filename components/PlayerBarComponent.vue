@@ -131,10 +131,9 @@ const handlePlay = () => {
   if (!playerStore.currentTrack) return;
 
   if (playerStore.isPlaying) {
-    // Если трек играет - ставим на паузу
     pauseTrack();
   } else {
-    // Если трек остановлен - запускаем воспроизведение
+    // Передаем текущий трек, а не новый
     playTrack(playerStore.currentTrack);
   }
 };
