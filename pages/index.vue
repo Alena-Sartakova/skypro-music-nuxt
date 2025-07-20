@@ -1,112 +1,127 @@
 <template>
-    <div class="wrapper">
-      <div class="container">
-        <main class="main">
-          <NavbarComponent />
-          
-          <div class="main__centerblock centerblock">
-            <div class="centerblock__search search">
-              <svg class="search__svg">
-                <use xlink:href="#icon-search"/>
+  <div class="wrapper">
+    <div class="container">
+      <main class="main">
+        <NavbarComponent />
+
+        <div class="main__centerblock centerblock">
+          <div class="centerblock__search search">
+            <svg class="search__svg">
+              <use xlink:href="#icon-search" />
+            </svg>
+            <input
+              class="search__text"
+              type="search"
+              placeholder="Поиск"
+              name="search"
+            />
+          </div>
+          <h2 class="centerblock__h2">Треки</h2>
+          <FilterControlsComponent :tracks="validTracks" />
+
+          <PlaylistComponent
+            :tracks="validTracks"
+            :pending="pending"
+            :error="error"
+          />
+        </div>
+
+        <div class="main__sidebar sidebar">
+          <div class="sidebar__personal">
+            <p class="sidebar__personal-name">Sergey.Ivanov</p>
+            <div class="sidebar__icon">
+              <svg>
+                <use xlink:href="#logout" />
               </svg>
-              <input
-                class="search__text"
-                type="search"
-                placeholder="Поиск"
-                name="search"
-              >
             </div>
-            <h2 class="centerblock__h2">Треки</h2>
-            <FilterControlsComponent />
-              
-            <PlaylistComponent />
           </div>
-
-          <div class="main__sidebar sidebar" >
-            <div class="sidebar__personal">
-              <p class="sidebar__personal-name">Sergey.Ivanov</p>
-              <div class="sidebar__icon">
-                <svg>
-                  <use xlink:href="#logout"/>
-                </svg>
+          <div class="sidebar__block">
+            <div class="sidebar__list">
+              <div class="sidebar__item">
+                <a class="sidebar__link" href="#">
+                  <img
+                    class="sidebar__img"
+                    src="/assets/img/playlist01.png"
+                    alt="day's playlist"
+                  />
+                </a>
               </div>
-            </div>
-            <div class="sidebar__block">
-              <div class="sidebar__list">
-                <div class="sidebar__item">
-                  <a class="sidebar__link" href="#">
-                    <img
-                      class="sidebar__img"
-                      src="/assets/img/playlist01.png"
-                      alt="day's playlist"
-                    >
-                  </a>
-                </div>
-                <div class="sidebar__item">
-                  <a class="sidebar__link" href="#">
-                    <img
-                      class="sidebar__img"
-                      src="/assets/img/playlist02.png"
-                      alt="day's playlist"
-                    >
-                  </a>
-                </div>
-                <div class="sidebar__item">
-                  <a class="sidebar__link" href="#">
-                    <img
-                      class="sidebar__img"
-                      src="/assets/img/playlist03.png"
-                      alt="day's playlist"
-                    >
-                  </a>
-                </div>
+              <div class="sidebar__item">
+                <a class="sidebar__link" href="#">
+                  <img
+                    class="sidebar__img"
+                    src="/assets/img/playlist02.png"
+                    alt="day's playlist"
+                  />
+                </a>
+              </div>
+              <div class="sidebar__item">
+                <a class="sidebar__link" href="#">
+                  <img
+                    class="sidebar__img"
+                    src="/assets/img/playlist03.png"
+                    alt="day's playlist"
+                  />
+                </a>
               </div>
             </div>
           </div>
+        </div>
+      </main>
 
-        </main>
+      <PlayerBarComponent />
 
-<PlayerBarComponent />
-
-        <footer class="footer"/>
-      </div>
+      <footer class="footer"></footer>
     </div>
+  </div>
 </template>
 <script setup>
-import { provide, ref } from 'vue';
-import { getTracks } from './public/tracks';
-import NavbarComponent from '~/components/NavbarComponent.vue';
-import PlaylistComponent from '~/components/PlaylistComponent.vue';
-import FilterControlsComponent from '~/components/FilterControlsComponent.vue';
+import NavbarComponent from "~/components/NavbarComponent.vue";
+import PlaylistComponent from "~/components/PlaylistComponent.vue";
+import FilterControlsComponent from "~/components/FilterControlsComponent.vue";
+import { computed } from "vue";
 
-
-const tracks = ref([])
-const loadTracks = async () => {
-  try {
-    const data = await getTracks()
-    tracks.value = data
-  } catch (error) {
-    console.error('Ошибка загрузки треков:', error)
+const formatDuration = (seconds) => {
+  if (!seconds) return "0:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+const {
+  data: response,
+  pending,
+  error,
+} = await useFetch(
+  "https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/",
+  {
+    transform: (responseData) => {
+      return responseData.data
+        .map((track) => ({
+          id: track._id,
+          title: track.name || "Без названия",
+          author: track.author || "Неизвестный исполнитель",
+          album: track.album || "Без альбома",
+          duration: formatDuration(track.duration_in_seconds),
+          release_date: track.release_date || "Неизвестно", 
+          genre: track.genre || ["Неизвестно"], 
+        }))
+        .filter((track) => track.title !== "Без названия");
+    },
   }
-}
+);
 
-// Предоставляем данные потомкам
-provide('tracks', tracks)
-
-// Загружаем треки при создании компонента
-loadTracks()
+const validTracks = computed(() => response.value || []);
 </script>
 <style>
-
 .wrapper {
   width: 100%;
   min-height: 100%;
   background-color: #383838;
-  font-family: 'Roboto', sans-serif
+  font-family: "Roboto", sans-serif;
 }
 
 .container {
-max-width: 1920px;
+  max-width: 1920px;
   width: 100%;
   padding: 0;
   margin: 0 auto;
@@ -229,5 +244,4 @@ max-width: 1920px;
   width: 100%;
   height: auto;
 }
-
 </style>

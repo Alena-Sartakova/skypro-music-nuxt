@@ -1,5 +1,5 @@
 const tracks = [
-  {
+/*   {
     id: 1,
     title: "Guilt",
     artist: "Nero",
@@ -52,7 +52,7 @@ const tracks = [
     duration: "5:20",
     genre: "Dubstep",
     year: 2018
-  }
+  } */
 ];
 
 // Имитация асинхронного запроса
