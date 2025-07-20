@@ -40,17 +40,17 @@ const pauseTrack = () => {
 };
 
   // Обработка времени
-  const handleTimeUpdate = () => {
-    if (!playerStore.audioRef) return;
-    const currentTime = playerStore.audioRef.currentTime;
-    const duration = playerStore.audioRef.duration;
-    
-    if (duration) {
-      const progress = (currentTime / duration) * 100;
-      playerStore.setProgress(progress);
-    }
-  };
+const handleTimeUpdate = () => {
+  if (!playerStore.audioRef) return;
 
+  const currentTime = playerStore.audioRef.currentTime;
+  const duration = playerStore.audioRef.duration;
+
+  if (duration) {
+    const progress = (currentTime / duration) * 100;
+    playerStore.setProgress(progress);
+  }
+};
   // Обработка окончания трека
   const handleTrackEnd = () => {
     playerStore.setPlaying(false);
@@ -58,12 +58,13 @@ const pauseTrack = () => {
   };
 
   // Перемотка
-  const seekTo = (percentage) => {
-    if (!playerStore.audioRef || !playerStore.currentTrack) return;
-    const newTime = (percentage / 100) * playerStore.audioRef.duration;
-    playerStore.audioRef.currentTime = newTime;
-    playerStore.setProgress(percentage);
-  };
+const seekTo = (percentage) => {
+  if (!playerStore.audioRef || !playerStore.currentTrack) return;
+
+  const newTime = (percentage / 100) * playerStore.audioRef.duration;
+  playerStore.audioRef.currentTime = newTime;
+  playerStore.setProgress(percentage);
+};
 
   // Обработка громкости
   const updateVolume = () => {

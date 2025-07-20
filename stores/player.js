@@ -28,8 +28,8 @@ export const usePlayerStore = defineStore("player", {
     },
 
     // Установить прогресс
-    setProgress(progress) {
-      this.progress = progress;
+    setProgress(value) {
+      this.progress = value;
     },
 
     // Установить громкость

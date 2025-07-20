@@ -1,7 +1,12 @@
 <template>
   <div class="bar">
     <div class="bar__content">
-      <div class="bar__player-progress" @click="handleProgressClick"></div>
+      <div class="bar__player-progress" @click="handleProgressClick">
+          <div 
+    class="progress-indicator" 
+    :style="{ width: playerStore.progress + '%' }"
+  ></div>
+      </div>
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
@@ -139,14 +144,10 @@ const handleProgressClick = (event) => {
   if (!playerStore.currentTrack) return;
 
   const progressBar = event.currentTarget;
-  // узнаём, где конкретно мы кликнули
-  const clickPosition = event.offsetX;
-  // получаем общую ширину бара
-  const progressBarWidth = progressBar.offsetWidth;
-  // и узнаем процентное соотношение клика к общей ширине.
-  // если в середине - 50%, значит нам нужна половина трека
-  const percentage = (clickPosition / progressBarWidth) * 100;
-  // передаём это значение в хук, чтобы он обновил значение в хранилище
+  const rect = progressBar.getBoundingClientRect();
+  const clickPosition = event.clientX - rect.left;
+  const percentage = (clickPosition / rect.width) * 100;
+
   seekTo(percentage);
 };
 
@@ -177,9 +178,18 @@ onMounted(() => {
 }
 
 .bar__player-progress {
+  position: relative;
   width: 100%;
   height: 5px;
   background: #2e2e2e;
+  cursor: pointer;
+
+  .progress-indicator {
+    position: absolute;
+    height: 100%;
+    background: #1a73e8;
+    transition: width 0.2s ease;
+  }
 }
 
 .bar__player-block {
