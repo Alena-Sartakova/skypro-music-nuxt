@@ -3,6 +3,15 @@ import { usePlayerStore } from "~/stores/player";
 export function useAudioPlayer() {
   const playerStore = usePlayerStore();
 
+  watchEffect(() => {
+    if (playerStore.progress >= 100 && playerStore.isPlaying) {
+      playerStore.audioRef.pause();
+      playerStore.setPlaying(false);
+      playerStore.setCurrentTime(0);
+      playerStore.setProgress(0);
+    }
+  });
+
   // Инициализация плеера
   const initPlayer = (element) => {
     if (!element) {
@@ -14,49 +23,51 @@ export function useAudioPlayer() {
   };
 
   // Воспроизведение трека
-const playTrack = async (track) => {
-  try {
-    if (playerStore.currentTrack?.id !== track.id) {
-      playerStore.setCurrentTrack(track);
-      playerStore.audioRef.src = track.track_file;
+  const playTrack = async (track) => {
+    try {
+      if (playerStore.currentTrack?.id !== track.id) {
+        playerStore.setCurrentTrack(track);
+        playerStore.audioRef.src = track.track_file;
+        playerStore.setProgress(0);
+        playerStore.setCurrentTime(0);
+      }
+      
+      playerStore.audioRef.currentTime = playerStore.currentTime;
+      await playerStore.audioRef.play();
+      playerStore.setPlaying(true);
+    } catch (error) {
+      console.error("Ошибка воспроизведения:", error);
+      playerStore.setPlaying(false);
     }
-    
-    // Всегда используем актуальное currentTime из хранилища
-    playerStore.audioRef.currentTime = playerStore.currentTime; // <-- Важно
-    await playerStore.audioRef.play();
-    playerStore.setPlaying(true);
-  } catch (error) {
-    console.error("Ошибка воспроизведения:", error);
-    playerStore.setPlaying(false);
-  }
-};
-// Пауза трека
-const pauseTrack = () => {
-  if (playerStore.audioRef) {
-    playerStore.audioRef.pause();
-    playerStore.setPlaying(false);
-    
-    // Сохраняем текущее время через метод хранилища
-    playerStore.setCurrentTime(playerStore.audioRef.currentTime);
-  }
-};
+  };
+
+  // Пауза трека
+  const pauseTrack = () => {
+    if (playerStore.audioRef) {
+      playerStore.audioRef.pause();
+      playerStore.setPlaying(false);
+      playerStore.setCurrentTime(playerStore.audioRef.currentTime);
+    }
+  };
 
   // Обработка времени
-const handleTimeUpdate = () => {
-  if (!playerStore.audioRef) return;
+  const handleTimeUpdate = () => {
+    if (!playerStore.audioRef) return;
 
-  const currentTime = playerStore.audioRef.currentTime;
-  const duration = playerStore.audioRef.duration;
+    const currentTime = playerStore.audioRef.currentTime;
+    const duration = playerStore.audioRef.duration;
 
-  if (duration) {
-    const progress = (currentTime / duration) * 100;
-    playerStore.setProgress(progress);
-  }
-};
+    if (duration) {
+      const progress = (currentTime / duration) * 100;
+      playerStore.setProgress(progress);
+    }
+  };
+
   // Обработка окончания трека
   const handleTrackEnd = () => {
     playerStore.setPlaying(false);
-    // Здесь можно добавить логику для перехода к следующему треку
+    playerStore.setCurrentTime(0);
+    playerStore.setProgress(0);
   };
 
   // Перемотка
@@ -65,9 +76,7 @@ const seekTo = (percentage) => {
   
   const newTime = (percentage / 100) * playerStore.audioRef.duration;
   playerStore.audioRef.currentTime = newTime;
-  
-  // Обновляем текущее время в хранилище сразу при перемотке
-  playerStore.setCurrentTime(newTime); // <-- Ключевое изменение
+  playerStore.setCurrentTime(newTime);
   playerStore.setProgress(percentage);
 };
 
@@ -81,14 +90,7 @@ const seekTo = (percentage) => {
   const setupEventListeners = () => {
     if (!playerStore.audioRef) return;
 
-    playerStore.audioRef.addEventListener('playing', () => {
-      playerStore.setPlaying(true);
-    });
-
-    playerStore.audioRef.addEventListener('pause', () => {
-      playerStore.setPlaying(false);
-    });
-
+    playerStore.audioRef.addEventListener('timeupdate', handleTimeUpdate);
     playerStore.audioRef.addEventListener('ended', handleTrackEnd);
   };
 
