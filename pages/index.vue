@@ -95,18 +95,20 @@ const {
   "https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/",
   {
     transform: (responseData) => {
-      return responseData.data
-        .map((track) => ({
-          id: track._id,
-          title: track.name || "Без названия",
-          author: track.author || "Неизвестный исполнитель",
-          album: track.album || "Без альбома",
-          duration: formatDuration(track.duration_in_seconds),
-          release_date: track.release_date || "Неизвестно", 
-          genre: track.genre || ["Неизвестно"], 
-        }))
-        .filter((track) => track.title !== "Без названия");
-    },
+/* console.log('Исходные данные трека:', responseData.data[0]); // Выведем трек для анализа */
+ return responseData.data
+ .map((track) => ({
+ id: track._id,
+ title: track.name || "Без названия",
+ author: track.author || "Неизвестный исполнитель",
+ album: track.album || "Без альбома",
+ duration: formatDuration(track.duration_in_seconds),
+ release_date: track.release_date || "Неизвестно", 
+ genre: track.genre || "Неизвестно", 
+ track_file: track.track_file || '' 
+ }))
+ .filter((track) => track.title !== "Без названия");
+},
   }
 );
 

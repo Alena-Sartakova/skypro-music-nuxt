@@ -1,5 +1,5 @@
 <template>
-  <div class="playlist__item">
+  <div class="playlist__item" @click="handleTrackClick">
     <div class="playlist__track track">
       <div class="track__title">
         <div class="track__title-image">
@@ -8,7 +8,7 @@
           </svg>
         </div>
         <div class="track__title-text">
-          <a class="track__title-link" href="http://">
+          <a class="track__title-link" href="#">
             {{ track.title }}
             <span 
               v-if="track.title && track.title.includes('(Remix)')" 
@@ -22,13 +22,13 @@
       <div class="track__author">
         <a 
           class="track__author-link" 
-          href="http://"
+          href="#"
         >
           {{ track.author || 'Неизвестный исполнитель' }}
         </a>
       </div>
       <div class="track__album">
-        <a class="track__album-link" href="http://">
+        <a class="track__album-link" href="#">
           {{ track.album || 'Без альбома' }}
         </a>
       </div>
@@ -43,21 +43,47 @@
 </template>
 
 <script setup>
-defineProps({
-  track: {
-    type: Object,
-    required: true,
-    default: () => ({
-      id: 0,
-      title: '',
-      author: '', 
-      album: '',
-      duration: '',
-      genre: '',
-      year: 0
-    })
-  }
-})
+// Объявляем props
+const props = defineProps({
+ track: {
+ type: Object,
+ required: true,
+ default: () => ({
+ id: 0,
+ title: '',
+ author: '', 
+ album: '',
+ duration: '',
+ genre: '',
+ year: 0,
+ track_file: ''
+ })
+ }
+});
+
+const playerStore = usePlayerStore();
+
+const handleTrackClick = async () => {
+ try {
+
+ if (!props.track.track_file) {
+ return;
+ }
+
+ if (!playerStore.audioRef) {
+ playerStore.setAudioRef(new Audio());
+ }
+
+ playerStore.setCurrentTrack(props.track);
+ playerStore.audioRef.src = props.track.track_file;
+ await playerStore.audioRef.play();
+ playerStore.setPlaying(true);
+
+ } catch (error) {
+ console.error('Ошибка воспроизведения:', error); 
+ playerStore.setPlaying(false);
+ }
+};
 </script>
 
 
