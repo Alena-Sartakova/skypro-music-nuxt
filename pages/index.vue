@@ -1,29 +1,16 @@
 <template>
   <NuxtLayout name="default">
+    <h2 class="centerblock__h2">Треки</h2>
+    <FilterControlsComponent :tracks="validTracks" />
 
-        
-          
-
-
-            <h2 class="centerblock__h2">Треки</h2>
-            <FilterControlsComponent :tracks="validTracks" />
-
-            <PlaylistComponent
-              :tracks="validTracks"
-              :pending="pending"
-              :error="error"
-            />
-  
-
-          
-
-        
-
-
+    <PlaylistComponent
+      :tracks="validTracks"
+      :pending="pending"
+      :error="error"
+    />
   </NuxtLayout>
 </template>
 <script setup>
-
 import PlaylistComponent from "~/components/PlaylistComponent.vue";
 import FilterControlsComponent from "~/components/FilterControlsComponent.vue";
 import { computed } from "vue";
