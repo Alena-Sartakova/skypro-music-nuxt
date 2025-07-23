@@ -186,5 +186,11 @@ body {
   margin-bottom: 12px;
 }
 
-
+.error {
+  color: #ff4444;
+  padding: 20px;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  margin: 20px;
+}
 
