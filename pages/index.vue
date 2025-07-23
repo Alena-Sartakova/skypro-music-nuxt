@@ -1,13 +1,11 @@
 <template>
   <NuxtLayout name="default">
     <h2 class="centerblock__h2">Треки</h2>
-    <FilterControlsComponent
-      :filters="tracksStore.filters"
-      @update-filter="tracksStore.updateFilter"
-    />
-
+    
+    <FilterControlsComponent />
+    
     <PlaylistComponent
-      :tracks="tracksStore.validTracks"
+      :tracks="tracksStore.filteredTracks"
       :pending="tracksStore.pending"
       :error="tracksStore.error"
     />
@@ -15,27 +13,22 @@
 </template>
 
 <script setup>
-import PlaylistComponent from "~/components/PlaylistComponent.vue";
-import FilterControlsComponent from "~/components/FilterControlsComponent.vue";
-import { useTracksStore } from "~/stores/useTracks";
+import { useTracksStore } from '~/stores/useTracks'
 
-const tracksStore = useTracksStore();
+const tracksStore = useTracksStore()
 
-useHead({
-  title: "Избранное | Skypro.Music",
-  meta: [
-    { name: "description", content: "Ваши любимые треки в одном месте" },
-    { property: "og:title", content: "Избранное | Skypro Music" },
-    { property: "og:site_name", content: "Skypro Music" },
-    { name: "twitter:title", content: "Skypro Music — Избранное" },
-  ],
-});
-
-// Загружаем треки при монтировании компонента
 onMounted(() => {
   if (tracksStore.rawTracks.length === 0) {
-    tracksStore.fetchTracks();
+    tracksStore.fetchTracks()
   }
-});
+})
+
+useHead({
+  title: "Главная | Skypro.Music",
+  meta: [
+    { name: "description", content: "Все треки на любой вкус" },
+    { property: "og:title", content: "Skypro Music - Главная" }
+  ]
+})
 </script>
 <style></style>
