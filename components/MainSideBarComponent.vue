@@ -49,11 +49,9 @@ const playlists = [
 ];
 
 // Функция для формирования пути к изображению
-const getImagePath = computed(() => {
-  return (imageName) => {
-    return `/_nuxt/assets/img/${imageName}`;
-  }
-})
+const getImagePath = (imageName) => {
+  return `/_nuxt/assets/img/${imageName}`;
+};
 </script>
 
 <style lang="css">
