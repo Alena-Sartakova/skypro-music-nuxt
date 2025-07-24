@@ -19,7 +19,7 @@
           <NuxtLink class="sidebar__link" :to="`/category/${playlist.id}`">
             <img
               class="sidebar__img"
-              
+              :src="getImagePath(playlist.image)"
               :alt="playlist.title"
             />
           </NuxtLink>
@@ -34,26 +34,26 @@ const playlists = [
   {
     id: "day",
     title: "Плейлист дня",
-    
+    image: "playlist01.png"
   },
   {
     id: "dance",
     title: "100 танцевальных хитов",
-    
+    image: "playlist02.png"
   },
   {
     id: "indie",
     title: "Инди-заряд",
-    
+    image: "playlist03.png"
   },
 ];
 
 // Функция для формирования пути к изображению
-/* const getImagePath = computed(() => {
+const getImagePath = computed(() => {
   return (imageName) => {
-    return new URL(`../assets/img/${imageName}`, import.meta.url).href;
+    return `/_nuxt/assets/img/${imageName}`;
   }
-}) */
+})
 </script>
 
 <style lang="css">
