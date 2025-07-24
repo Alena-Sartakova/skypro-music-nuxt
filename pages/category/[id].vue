@@ -5,8 +5,7 @@
     <div v-if="error" class="error">Ошибка: {{ error }}</div>
 
     <PlaylistComponent
-      v-else
-      :tracks="tracksStore.validTracks"
+      :tracks="tracksStore.filteredTracks"
       :pending="tracksStore.pending"
       :error="tracksStore.error"
     />

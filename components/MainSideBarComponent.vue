@@ -34,17 +34,17 @@ const playlists = [
   {
     id: "day",
     title: "Плейлист дня",
-    image: "playlist01.png"
+    image: "playlist01.png",
   },
   {
     id: "dance",
     title: "100 танцевальных хитов",
-    image: "playlist02.png"
+    image: "playlist02.png",
   },
   {
     id: "indie",
     title: "Инди-заряд",
-    image: "playlist03.png"
+    image: "playlist03.png",
   },
 ];
 
