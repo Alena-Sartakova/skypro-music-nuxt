@@ -83,8 +83,14 @@ body {
   flex-shrink: 0;
   overflow: hidden;
 }
-
-
+.centerblock__h2 {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 72px;
+  letter-spacing: -0.8px;
+  margin-bottom: 45px;
+}
 
 .centerblock__content {
   display: -webkit-box;
@@ -180,5 +186,11 @@ body {
   margin-bottom: 12px;
 }
 
-
+.error {
+  color: #ff4444;
+  padding: 20px;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  margin: 20px;
+}
 

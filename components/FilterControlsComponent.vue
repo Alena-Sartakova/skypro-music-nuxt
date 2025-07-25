@@ -1,21 +1,32 @@
 <template>
-  <div class="centerblock__filter filter">
-    <div class="filter__title">Искать по:</div>
+  <div class="filter-container">
+    <span class="filter-label">Искать по:</span>
 
     <!-- Фильтр по исполнителю -->
-    <div class="filter-wrapper">
-      <div
-        class="filter__button"
-        :class="{ active: activeFilter === 'author' }"
-        @click="toggleFilter('author')"
+    <div class="filter-group">
+      <button
+        class="filter-button"
+        :class="{ active: activeDropdown === 'author' }"
+        @click="toggleDropdown('author')"
       >
-        исполнителю
-      </div>
-      <transition name="fade">
-        <div v-if="activeFilter === 'author'" class="filter__dropdown">
-          <ul class="filter__list">
-            <li v-for="item in authorItems" :key="item" class="filter__item">
-              {{ item }}
+        Исполнителю
+        <span v-if="selectedAuthor" class="filter-indicator"></span>
+      </button>
+      <transition name="dropdown">
+        <div v-if="activeDropdown === 'author'" class="dropdown-menu">
+          <ul class="filter-list">
+            <li
+              v-for="author in authors"
+              :key="author"
+              class="filter-item"
+              :class="{ selected: author === selectedAuthor }"
+              @click="handleAuthorSelect(author)"
+            >
+              <span
+                v-if="author === selectedAuthor"
+                class="selection-dot"
+              ></span>
+              {{ author }}
             </li>
           </ul>
         </div>
@@ -23,19 +34,27 @@
     </div>
 
     <!-- Фильтр по году -->
-    <div class="filter-wrapper">
-      <div
-        class="filter__button"
-        :class="{ active: activeFilter === 'year' }"
-        @click="toggleFilter('year')"
+    <div class="filter-group">
+      <button
+        class="filter-button"
+        :class="{ active: activeDropdown === 'year' }"
+        @click="toggleDropdown('year')"
       >
-        году выпуска
-      </div>
-      <transition name="fade">
-        <div v-if="activeFilter === 'year'" class="filter__dropdown">
-          <ul class="filter__list">
-            <li v-for="item in yearItems" :key="item" class="filter__item">
-              {{ item }}
+        Году
+        <span v-if="selectedYear" class="filter-indicator"></span>
+      </button>
+      <transition name="dropdown">
+        <div v-if="activeDropdown === 'year'" class="dropdown-menu">
+          <ul class="filter-list">
+            <li
+              v-for="year in years"
+              :key="year"
+              class="filter-item"
+              :class="{ selected: year === selectedYear }"
+              @click="handleYearSelect(year)"
+            >
+              <span v-if="year === selectedYear" class="selection-dot"></span>
+              {{ year }}
             </li>
           </ul>
         </div>
@@ -43,19 +62,27 @@
     </div>
 
     <!-- Фильтр по жанру -->
-    <div class="filter-wrapper">
-      <div
-        class="filter__button"
-        :class="{ active: activeFilter === 'genre' }"
-        @click="toggleFilter('genre')"
+    <div class="filter-group">
+      <button
+        class="filter-button"
+        :class="{ active: activeDropdown === 'genre' }"
+        @click="toggleDropdown('genre')"
       >
-        жанру
-      </div>
-      <transition name="fade">
-        <div v-if="activeFilter === 'genre'" class="filter__dropdown">
-          <ul class="filter__list">
-            <li v-for="item in genreItems" :key="item" class="filter__item">
-              {{ item }}
+        Жанру
+        <span v-if="selectedGenre" class="filter-indicator"></span>
+      </button>
+      <transition name="dropdown">
+        <div v-if="activeDropdown === 'genre'" class="dropdown-menu">
+          <ul class="filter-list">
+            <li
+              v-for="genre in genres"
+              :key="genre"
+              class="filter-item"
+              :class="{ selected: genre === selectedGenre }"
+              @click="handleGenreSelect(genre)"
+            >
+              <span v-if="genre === selectedGenre" class="selection-dot"></span>
+              {{ genre }}
             </li>
           </ul>
         </div>
@@ -65,129 +92,155 @@
 </template>
 
 <script setup>
+import { ref, computed } from "vue";
+import { useTracksStore } from "~/stores/useTracks";
 
-const props = defineProps({
-  tracks: {
-    type: Array,
-    default: () => [],
-  },
-});
+const tracksStore = useTracksStore();
+const activeDropdown = ref(null);
 
-const activeFilter = ref(null);
+// Доступные фильтры
+const authors = computed(() =>
+  [...new Set(tracksStore.rawTracks.map((t) => t.author))].sort()
+);
+const years = computed(() =>
+  [...new Set(tracksStore.rawTracks.map((t) => t.release_date))].sort(
+    (a, b) => b - a
+  )
+);
+const genres = computed(() =>
+  [...new Set(tracksStore.rawTracks.flatMap((t) => t.genre))].sort()
+);
 
-const toggleFilter = (filter) => {
-  activeFilter.value = activeFilter.value === filter ? null : filter;
+// Выбранные значения
+const selectedAuthor = computed(() => tracksStore.filters.author);
+const selectedYear = computed(() => tracksStore.filters.year);
+const selectedGenre = computed(() => tracksStore.filters.genre);
+
+const toggleDropdown = (type) => {
+  activeDropdown.value = activeDropdown.value === type ? null : type;
 };
 
-// Обработка авторов
-const authorItems = computed(() => {
-  if (!props.tracks?.length) return [];
-  const items = new Set();
-  props.tracks.forEach((track) => track.author && items.add(track.author));
-  return sortItems(Array.from(items), "Неизвестно");
-});
-
-// Обработка годов
-const yearItems = computed(() => {
-  if (!props.tracks?.length) return [];
-  const items = new Set();
-  props.tracks.forEach((track) => {
-    const year = track.release_date?.split("-")[0] || "Неизвестно";
-    items.add(year);
+const handleFilterSelect = (type, value) => {
+  tracksStore.updateFilter({
+    [type]: tracksStore.filters[type] === value ? null : value,
   });
-  return sortItems(Array.from(items), "Неизвестно", true);
-});
-
-// Обработка жанров
-const genreItems = computed(() => {
-  if (!props.tracks?.length) return [];
-  const items = new Set();
-  props.tracks.forEach((track) => {
-    const genres = Array.isArray(track.genre) ? track.genre : [track.genre];
-    genres.filter(Boolean).forEach((g) => items.add(g.trim()));
-  });
-  return sortItems(Array.from(items), "неизвестно");
-});
-
-// Универсальная сортировка
-const sortItems = (arr, unknownWord, isNumeric = false) => {
-  return arr.sort((a, b) => {
-    if (a === unknownWord) return 1;
-    if (b === unknownWord) return -1;
-    return isNumeric ? Number(b) - Number(a) : a.localeCompare(b);
-  });
+  activeDropdown.value = null;
 };
+
+const handleAuthorSelect = (author) => handleFilterSelect("author", author);
+const handleYearSelect = (year) => handleFilterSelect("year", year);
+const handleGenreSelect = (genre) => handleFilterSelect("genre", genre);
 </script>
 
-<style lang="scss" scoped>
-.centerblock__filter {
+<style scoped>
+.filter-container {
   display: flex;
   align-items: center;
-  margin-bottom: 51px;
+  gap: 12px;
+  padding: 8px 0;
   position: relative;
 }
 
-.filter__title {
-  font: 400 16px/24px sans-serif;
-  margin-right: 15px;
+.filter-label {
+  font-size: 13px;
+  color: #a0a0a0;
+  margin-right: 8px;
 }
 
-.filter-wrapper {
+.filter-group {
   position: relative;
-  margin-right: 10px;
 }
 
-.filter__button {
-  font: 400 16px/24px sans-serif;
-  border: 1px solid #fff;
-  border-radius: 60px;
-  padding: 6px 20px;
+.filter-button {
+  background: #2a2a2a;
+  border: 1px solid #404040;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #e0e0e0;
   cursor: pointer;
-  transition: all 0.3s;
-
-  &.active {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #ad61ff;
-  }
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.filter__dropdown {
+.filter-button:hover {
+  background: #333333;
+  border-color: #535353;
+}
+
+.filter-button.active {
+  background: #3a1a4f;
+  border-color: #ad61ff;
+  color: #d8a4ff;
+}
+
+.filter-indicator {
+  width: 8px;
+  height: 8px;
+  background: #ad61ff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(173, 97, 255, 0.3);
+}
+
+.dropdown-menu {
   position: absolute;
-  top: calc(100% + 5px);
+  top: calc(100% + 6px);
   left: 0;
+  background: #333333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  background: #313131;
-  padding: 15px;
-  max-height: 300px;
+  min-width: 180px;
+  max-height: 240px;
   overflow-y: auto;
-  min-width: 150px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-
-  .filter__list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .filter__item {
-    color: #fff;
-    font-size: 14px;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.3s;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  }
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
+.filter-list {
+  list-style: none;
+  padding: 6px 0;
+  margin: 0;
 }
-.fade-enter-from,
-.fade-leave-to {
+
+.filter-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #d0d0d0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filter-item:hover {
+  background: #404040;
+}
+
+.filter-item.selected {
+  color: #ad61ff;
+  padding-left: 28px;
+}
+
+.selection-dot {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
   opacity: 0;
+  transform: translateY(-8px);
 }
 </style>
