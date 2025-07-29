@@ -29,11 +29,14 @@ export const useAudioPlayer = () => {
     }
   };
 
-  const handleTrackEnd = () => {
-    playerStore.setPlaying(false);
-    playerStore.setCurrentTime(0);
-    playerStore.setProgress(0);
-  };
+const handleTrackEnd = () => {
+  if (playerStore.isLoop) {
+    playerStore.audioRef.currentTime = 0;
+    playerStore.audioRef.play();
+  } else {
+    playerStore.nextTrack();
+  }
+}
 
   const seekTo = (percentage) => {
     if (!playerStore.audioRef || !playerStore.currentTrack) return;

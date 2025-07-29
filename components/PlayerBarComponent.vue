@@ -41,12 +41,20 @@
                 <use xlink:href="#icon-next"></use>
               </svg>
             </div>
-            <div class="player__btn-repeat _btn-icon">
+            <div
+              class="player__btn-repeat _btn-icon"
+              :class="{ 'is-active': playerStore.isLoop }"
+              @click="playerStore.toggleLoop"
+            >
               <svg class="player__btn-repeat-svg">
                 <use xlink:href="#icon-repeat"></use>
               </svg>
             </div>
-            <div class="player__btn-shuffle _btn-icon">
+            <div
+              class="player__btn-shuffle _btn-icon"
+              :class="{ 'is-active': playerStore.isShuffle }"
+              @click="playerStore.toggleShuffle"
+            >
               <svg class="player__btn-shuffle-svg">
                 <use xlink:href="#icon-shuffle"></use>
               </svg>
@@ -272,12 +280,9 @@ onMounted(() => initPlayer(audioRef.value));
 .player__btn-repeat,
 .player__btn-shuffle {
   padding: 5px;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
   align-items: center;
+  transition: all 0.3s ease; 
 }
 
 .player__btn-prev {
@@ -313,30 +318,51 @@ onMounted(() => initPlayer(audioRef.value));
 
 .player__btn-repeat {
   margin-right: 24px;
-}
+  
+  // Иконка повтора
+  &-svg {
+    width: 18px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
 
-.player__btn-repeat-svg {
-  width: 18px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
+  }
 }
 
 .player__btn-shuffle {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+  // Иконка перемешивания
+  &-svg {
+    width: 19px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
+
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
+  }
 }
 
-.player__btn-shuffle-svg {
-  width: 19px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
+// Общие стили для активных состояний
+.is-active {
+  svg {
+    filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
 }
+
 
 .player__track-play {
   display: -webkit-box;
