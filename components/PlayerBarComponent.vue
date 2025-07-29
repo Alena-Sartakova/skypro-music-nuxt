@@ -2,15 +2,19 @@
   <div class="bar">
     <div class="bar__content">
       <div class="bar__player-progress" @click="handleProgressClick">
-          <div 
-    class="progress-indicator" 
-    :style="{ width: playerStore.progress + '%' }"
-  ></div>
+        <div
+          class="progress-indicator"
+          :style="{ width: playerStore.progress + '%' }"
+        ></div>
       </div>
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
-            <div class="player__btn-prev">
+            <div
+              class="player__btn-prev _btn"
+              :disabled="!hasPrevTrack || !playerStore.currentTrack"
+              @click="handlePrevTrack"
+            >
               <svg class="player__btn-prev-svg">
                 <use xlink:href="#icon-prev"></use>
               </svg>
@@ -28,7 +32,11 @@
                 ></use>
               </svg>
             </div>
-            <div class="player__btn-next">
+            <div
+              class="player__btn-next _btn"
+              :disabled="!hasNextTrack"
+              @click="handleNextTrack"
+            >
               <svg class="player__btn-next-svg">
                 <use xlink:href="#icon-next"></use>
               </svg>
@@ -110,49 +118,64 @@
 
 <script setup>
 import { usePlayerStore } from "~/stores/player";
+import { useAudioPlayer } from "~/composables/useAudioPlayer";
 
-// Получаем store
 const playerStore = usePlayerStore();
+const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
+  useAudioPlayer();
+
 const audioRef = ref(null);
 
-// Получаем функции из composable
-const {
-  playTrack,
-  pauseTrack,
-  handleTimeUpdate,
-  handleTrackEnd,
-  seekTo,
-  updateVolume,
-  initPlayer,
-} = useAudioPlayer();
+const hasNextTrack = computed(() => {
+  return playerStore.hasNextTrack;
+});
 
-// Обработчик клика по кнопке play
+const hasPrevTrack = computed(() => {
+  return playerStore.hasPrevTrack;
+});
 const handlePlay = () => {
   if (!playerStore.currentTrack) return;
 
   if (playerStore.isPlaying) {
-    pauseTrack();
+    playerStore.pauseTrack();
   } else {
-    // Передаем текущий трек, а не новый
-    playTrack(playerStore.currentTrack);
+    playerStore.playTrack(playerStore.currentTrack);
   }
 };
 
-// Обработчик клика по прогресс-бару, чтобы перемотать трек
 const handleProgressClick = (event) => {
-  if (!playerStore.currentTrack) return;
-
-  const progressBar = event.currentTarget;
-  const rect = progressBar.getBoundingClientRect();
-  const clickPosition = event.clientX - rect.left;
-  const percentage = (clickPosition / rect.width) * 100;
-
+  const rect = event.currentTarget.getBoundingClientRect();
+  const percentage = ((event.clientX - rect.left) / rect.width) * 100;
   seekTo(percentage);
 };
 
-onMounted(() => {
-  initPlayer(audioRef.value);
-});
+const handleNextTrack = async () => {
+  try {
+    await playerStore.nextTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+const handlePrevTrack = async () => {
+  try {
+    await playerStore.prevTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+onMounted(() => initPlayer(audioRef.value));
 </script>
 
 <style lang="scss" scoped>

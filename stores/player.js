@@ -2,57 +2,107 @@ import { defineStore } from "pinia";
 
 export const usePlayerStore = defineStore("player", {
   state: () => ({
-    // Текущий трек
     currentTrack: null,
-    // Список треков
     playlist: [],
-    // Играет ли сейчас
     isPlaying: false,
-    // Прогресс воспроизведения (0-100)
     progress: 0,
-    // Громкость (0-100)
     volume: 50,
-    // Ссылка на аудиотег
     audioRef: null,
     currentTime: 0,
+    currentTrackIndex: -1
   }),
 
+  getters: {
+    hasPrevTrack: (state) => state.currentTrackIndex > 0,
+    hasNextTrack: (state) => state.currentTrackIndex < state.playlist.length - 1
+  },
+
   actions: {
-    // Установить текущий трек
     setCurrentTrack(track) {
       this.currentTrack = track;
+      this.currentTrackIndex = this.playlist.findIndex(t => t.id === track.id);
     },
 
-    // Установить плейлист
-    setPlaylist(tracks) {
-      this.playlist = tracks;
-    },
+  setPlaylist(tracks) {
+      this.playlist = Array.isArray(tracks) ? tracks : [tracks];
+      this.currentTrackIndex = this.currentTrack 
+        ? this.playlist.findIndex(t => t.id === this.currentTrack.id)
+        : 0; 
+  },
 
-    // Установить прогресс
     setProgress(value) {
       this.progress = value;
     },
 
-    // Установить громкость
     setVolume(volume) {
       this.volume = volume;
     },
 
-    // Установить состояние воспроизведения
     setPlaying(isPlaying) {
       this.isPlaying = isPlaying;
     },
 
-        setCurrentTime(time) {
+    setCurrentTime(time) {
       this.currentTime = time;
     },
 
-    // Установить ссылку на аудиоэлемент
-    setAudioRef(element) {
-      this.audioRef = element;
+ async playTrack(track) {
+    try {
+      if (!track?.track_file || !this.audioRef) return;
+
+      if (!this.playlist.some(t => t.id === track.id)) {
+        this.setPlaylist([...this.playlist, track]);
+      }
+
+      if (this.currentTrack?.id !== track.id) {
+        this.audioRef.src = track.track_file;
+        await this.audioRef.load();
+        this.setCurrentTrack(track);
+      }
+
+      await this.audioRef.play();
+      this.isPlaying = true;
+    } catch (error) {
+      console.error("Play error:", error);
+      this.isPlaying = false;
+    }
+  },
+
+    pauseTrack() {
       if (this.audioRef) {
-        this.audioRef.volume = this.volume / 100;
+        this.audioRef.pause();
+        this.isPlaying = false;
       }
     },
-  },
+
+    async nextTrack() {
+      if (!this.hasNextTrack) return;
+
+      this.currentTrackIndex++;
+      const nextTrack = this.playlist[this.currentTrackIndex];
+
+      if (nextTrack) {
+        this.setCurrentTrack(nextTrack);
+        if (this.audioRef) {
+          this.audioRef.src = nextTrack.track_file;
+          await this.audioRef.load();
+        }
+      }
+    },
+
+    async prevTrack() {
+      if (!this.hasPrevTrack) return;
+
+      this.currentTrackIndex--;
+      const prevTrack = this.playlist[this.currentTrackIndex];
+
+      if (prevTrack) {
+        this.setCurrentTrack(prevTrack);
+        if (this.audioRef) {
+          this.audioRef.src = prevTrack.track_file;
+          await this.audioRef.load();
+        }
+      }
+    }
+  }
 });

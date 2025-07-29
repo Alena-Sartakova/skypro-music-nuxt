@@ -13,15 +13,22 @@
 </template>
 
 <script setup>
-import { useTracksStore } from '~/stores/useTracks'
+import { useTracksStore } from '~/stores/useTracks';
+import { usePlayerStore } from "~/stores/player";
 
 const tracksStore = useTracksStore()
+const playerStore = usePlayerStore();
 
-onMounted(() => {
+onMounted(async () => {
   if (tracksStore.rawTracks.length === 0) {
-    tracksStore.fetchTracks()
+    await tracksStore.fetchTracks();
   }
-})
+  
+  // Основная фикс: синхронизация плейлиста при загрузке
+  if (playerStore.playlist.length === 0) {
+    playerStore.setPlaylist(tracksStore.filteredTracks);
+  }
+});
 
 useHead({
   title: "Главная | Skypro.Music",

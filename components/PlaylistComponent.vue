@@ -13,6 +13,7 @@
     v-for="track in tracks" 
     :key="track.id" 
     :track="track"
+    :playlist="{ id: 'current', tracks: tracks }"
    />
   </div>
   
@@ -29,7 +30,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   tracks: {
     type: Array,
     default: () => []
@@ -41,6 +42,14 @@ defineProps({
   error: {
     type: Object,
     default: null
+  }
+});
+const playerStore = usePlayerStore();
+
+onMounted(() => {
+  /* console.log('Передаваемые треки:', props.tracks.map(t => t.title)); */
+  if (playerStore.playlist.length === 0 && props.tracks?.length) {
+    playerStore.setPlaylist(props.tracks);
   }
 });
 </script>
