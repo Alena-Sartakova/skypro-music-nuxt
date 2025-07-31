@@ -2,15 +2,19 @@
   <div class="bar">
     <div class="bar__content">
       <div class="bar__player-progress" @click="handleProgressClick">
-          <div 
-    class="progress-indicator" 
-    :style="{ width: playerStore.progress + '%' }"
-  ></div>
+        <div
+          class="progress-indicator"
+          :style="{ width: playerStore.progress + '%' }"
+        ></div>
       </div>
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
-            <div class="player__btn-prev">
+            <div
+              class="player__btn-prev _btn"
+              :disabled="!hasPrevTrack || !playerStore.currentTrack"
+              @click="handlePrevTrack"
+            >
               <svg class="player__btn-prev-svg">
                 <use xlink:href="#icon-prev"></use>
               </svg>
@@ -28,17 +32,29 @@
                 ></use>
               </svg>
             </div>
-            <div class="player__btn-next">
+            <div
+              class="player__btn-next _btn"
+              :disabled="!hasNextTrack"
+              @click="handleNextTrack"
+            >
               <svg class="player__btn-next-svg">
                 <use xlink:href="#icon-next"></use>
               </svg>
             </div>
-            <div class="player__btn-repeat _btn-icon">
+            <div
+              class="player__btn-repeat _btn-icon"
+              :class="{ 'is-active': playerStore.isLoop }"
+              @click="playerStore.toggleLoop"
+            >
               <svg class="player__btn-repeat-svg">
                 <use xlink:href="#icon-repeat"></use>
               </svg>
             </div>
-            <div class="player__btn-shuffle _btn-icon">
+            <div
+              class="player__btn-shuffle _btn-icon"
+              :class="{ 'is-active': playerStore.isShuffle }"
+              @click="playerStore.toggleShuffle"
+            >
               <svg class="player__btn-shuffle-svg">
                 <use xlink:href="#icon-shuffle"></use>
               </svg>
@@ -110,49 +126,64 @@
 
 <script setup>
 import { usePlayerStore } from "~/stores/player";
+import { useAudioPlayer } from "~/composables/useAudioPlayer";
 
-// Получаем store
 const playerStore = usePlayerStore();
+const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
+  useAudioPlayer();
+
 const audioRef = ref(null);
 
-// Получаем функции из composable
-const {
-  playTrack,
-  pauseTrack,
-  handleTimeUpdate,
-  handleTrackEnd,
-  seekTo,
-  updateVolume,
-  initPlayer,
-} = useAudioPlayer();
+const hasNextTrack = computed(() => {
+  return playerStore.hasNextTrack;
+});
 
-// Обработчик клика по кнопке play
+const hasPrevTrack = computed(() => {
+  return playerStore.hasPrevTrack;
+});
 const handlePlay = () => {
   if (!playerStore.currentTrack) return;
 
   if (playerStore.isPlaying) {
-    pauseTrack();
+    playerStore.pauseTrack();
   } else {
-    // Передаем текущий трек, а не новый
-    playTrack(playerStore.currentTrack);
+    playerStore.playTrack(playerStore.currentTrack);
   }
 };
 
-// Обработчик клика по прогресс-бару, чтобы перемотать трек
 const handleProgressClick = (event) => {
-  if (!playerStore.currentTrack) return;
-
-  const progressBar = event.currentTarget;
-  const rect = progressBar.getBoundingClientRect();
-  const clickPosition = event.clientX - rect.left;
-  const percentage = (clickPosition / rect.width) * 100;
-
+  const rect = event.currentTarget.getBoundingClientRect();
+  const percentage = ((event.clientX - rect.left) / rect.width) * 100;
   seekTo(percentage);
 };
 
-onMounted(() => {
-  initPlayer(audioRef.value);
-});
+const handleNextTrack = async () => {
+  try {
+    await playerStore.nextTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+const handlePrevTrack = async () => {
+  try {
+    await playerStore.prevTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+onMounted(() => initPlayer(audioRef.value));
 </script>
 
 <style lang="scss" scoped>
@@ -249,12 +280,9 @@ onMounted(() => {
 .player__btn-repeat,
 .player__btn-shuffle {
   padding: 5px;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
   align-items: center;
+  transition: all 0.3s ease; 
 }
 
 .player__btn-prev {
@@ -290,30 +318,51 @@ onMounted(() => {
 
 .player__btn-repeat {
   margin-right: 24px;
-}
+  
+  // Иконка повтора
+  &-svg {
+    width: 18px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
 
-.player__btn-repeat-svg {
-  width: 18px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
+  }
 }
 
 .player__btn-shuffle {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+  // Иконка перемешивания
+  &-svg {
+    width: 19px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
+
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
+  }
 }
 
-.player__btn-shuffle-svg {
-  width: 19px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
+// Общие стили для активных состояний
+.is-active {
+  svg {
+    filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
 }
+
 
 .player__track-play {
   display: -webkit-box;

@@ -5,7 +5,9 @@
         <NavbarComponent/>
           <div class="main__centerblock">
             <SearchComponent />
-            <slot></slot>
+            <div class="content-container">
+              <slot></slot>
+            </div>
           </div>
         <MainSideBarComponent />
         </div>

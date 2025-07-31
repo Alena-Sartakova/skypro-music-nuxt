@@ -5,7 +5,13 @@
         <form class="modal__form-login" @submit.prevent="handleSubmit">
           <NuxtLink to="/">
             <div class="modal__logo">
-              <img src="/assets/img/logo_modal.png" alt="logo" />
+              <NuxtImg
+                src="/assets/img/logo_modal.png"
+                alt="logo"
+                loading="eager"
+                format="png"
+                quality="100"
+              />
             </div>
           </NuxtLink>
 
@@ -50,44 +56,44 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { showError } from '#app'
+import { ref, computed } from "vue";
+import { showError } from "#app";
+import { NuxtImg } from "#components";
 
-const route = useRoute()
-const router = useRouter()
-const isSignUp = computed(() => route.path.includes("signup"))
+const route = useRoute();
+const router = useRouter();
+const isSignUp = computed(() => route.path.includes("signup"));
 
 // Используем отдельные ref вместо объекта form
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
+const email = ref("");
+const password = ref("");
+const confirmPassword = ref("");
 
 const handleSubmit = () => {
   if (!email.value.trim() || !password.value.trim()) {
     showError({
       statusCode: 400,
-      message: 'Заполните email и пароль'
-    })
-    return
+      message: "Заполните email и пароль",
+    });
+    return;
   }
 
   if (isSignUp.value && !confirmPassword.value.trim()) {
     showError({
       statusCode: 400,
-      message: 'Заполните поле подтверждения пароля'
-    })
-    return
+      message: "Заполните поле подтверждения пароля",
+    });
+    return;
   }
 
-  console.log('Форма отправлена:', { 
-    email: email.value, 
-    password: password.value, 
-    confirmPassword: confirmPassword.value 
-  })
-  router.push('/')
-}
+  console.log("Форма отправлена:", {
+    email: email.value,
+    password: password.value,
+    confirmPassword: confirmPassword.value,
+  });
+  router.push("/");
+};
 </script>
-
 
 <style lang="scss" scoped>
 .wrapper {

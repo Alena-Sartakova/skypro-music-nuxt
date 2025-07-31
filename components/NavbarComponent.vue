@@ -1,9 +1,16 @@
 <template>
   <nav class="main__nav nav">
     <div class="nav__logo logo">
-      <img class="logo__image" src="/assets/img/logo.png" />
+      <NuxtImg
+        alt="Логотип"
+        :placeholder="[5]"
+        src="/assets/img/logo.png"
+        loading="eager"
+        format="png"
+        quality="100"
+      />
     </div>
-    
+
     <div class="nav__burger burger" @click="toggleMenu">
       <span class="burger__line"></span>
       <span class="burger__line"></span>
@@ -28,6 +35,7 @@
 </template>
 
 <script setup>
+import { NuxtImg } from "#components";
 import { ref } from "vue";
 
 const isMenuVisible = ref(false);
@@ -46,7 +54,7 @@ const toggleMenu = () => {
 
 .nav__logo {
   width: 113.33px;
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
 }
 
 .nav__burger {
@@ -60,8 +68,8 @@ const toggleMenu = () => {
 }
 
 .burger__line {
-  height: 1px; 
-  background-color:#d3d3d3;
+  height: 1px;
+  background-color: #d3d3d3;
 }
 
 .nav__menu {
