@@ -98,7 +98,7 @@ const getImagePath = (imageName) => {
 
 .sidebar__block {
   height: 100%;
-  padding: 240px 0 0 0;
+  padding: 140px 0 0 0;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;

@@ -1,14 +1,18 @@
 <template>
   <NuxtLayout name="default">
-    <h2 class="centerblock__h2">Треки</h2>
-    
-    <FilterControlsComponent />
-    
-    <PlaylistComponent
-      :tracks="tracksStore.filteredTracks"
-      :pending="tracksStore.pending"
-      :error="tracksStore.error"
-    />
+    <div class="content-wrapper">
+      <h2 class="centerblock__h2">Треки</h2>
+      
+      <FilterControlsComponent />
+      
+      <div class="tracks-scroll-container">
+        <PlaylistComponent
+          :tracks="tracksStore.filteredTracks"
+          :pending="tracksStore.pending"
+          :error="tracksStore.error"
+        />
+      </div>
+    </div>
   </NuxtLayout>
 </template>
 
