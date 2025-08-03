@@ -1,119 +1,96 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     user: null,
-    isAuthenticated: false,
+    isAuth: false,
     loading: false,
     error: null
   }),
 
   actions: {
-    async signup(credentials) {
+    async setUser(credentials) {
       try {
-        this.loading = true
-        const response = await this.fetchApi('/user/signup/', 'POST', {
-          email: credentials.email,
-          password: credentials.password,
-          username: credentials.username
-        })
+        this.loading = true;
+        const isSignup = !!credentials.username;
+        const endpoint = isSignup ? '/user/signup/' : '/user/login/';
 
-        // Сохраняем данные пользователя после успешной регистрации
-        this.user = {
-          email: response.result.email,
-          username: response.result.username,
-          id: response.result._id
-        }
-        
-        // Перенаправление на логин после регистрации
-        return {
-          success: true,
-          message: response.message
-        }
+        const response = await this.fetchApi(endpoint, 'POST', credentials);
 
+        const userData = {
+          id: response.result?._id || response._id,
+          email: response.result?.email || response.email,
+          username: response.result?.username || response.username
+        };
+
+        this.user = userData;
+        this.isAuth = true;
+        this.saveToStorage(userData);
       } catch (error) {
-        // Специфичная обработка ошибки занятого email
-        if (error.message.includes('403')) {
-          this.error = 'Пользователь с таким email уже существует'
-        } else {
-          this.error = error.message
-        }
-        throw error
+        this.error = this.getErrorMessage(error);
+        throw error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
-    async login(credentials) {
+    clearUser() {
+      this.user = null;
+      this.isAuth = false;
+      this.removeFromStorage();
+    },
+
+    restoreUser() {
+      if (typeof window === 'undefined') return;
+
+      const storedData = localStorage.getItem('user');
+      if (!storedData) return;
+
       try {
-        this.loading = true
-        const data = await this.fetchApi('/user/login/', 'POST', credentials)
-        
-        this.user = {
-          email: data.email,
-          username: data.username,
-          id: data._id
+        const parsedData = JSON.parse(storedData);
+        if (this.isValidUser(parsedData)) {
+          this.user = parsedData;
+          this.isAuth = true;
         }
-        
-        this.isAuthenticated = true
-        localStorage.setItem('user', JSON.stringify(this.user))
-        
-        return data
-      } catch (error) {
-        // Обработка ошибки 401
-        if (error.message.includes('401')) {
-          this.error = 'Неверный email или пароль'
-        } else {
-          this.error = error.message
-        }
-        throw error
-      } finally {
-        this.loading = false
+      } catch {
+        this.removeFromStorage();
       }
     },
 
-    logout() {
-      this.$reset()
-      localStorage.removeItem('user')
+    saveToStorage(data) {
+      localStorage.setItem('user', JSON.stringify(data));
     },
 
-    initialize() {
-      const userData = localStorage.getItem('user')
-      if (userData) {
-        this.user = JSON.parse(userData)
-        this.isAuthenticated = true
-      }
+    removeFromStorage() {
+      localStorage.removeItem('user');
     },
 
-    async fetchApi(url, method = 'GET', body = null) {
+    isValidUser(data) {
+      return !!data?.id && !!data?.email && !!data?.username;
+    },
+
+    getErrorMessage(error) {
+      const message = error.message || 'Ошибка авторизации';
+      if (message.includes('403')) return 'Пользователь уже существует';
+      if (message.includes('401')) return 'Неверные учетные данные';
+      return message;
+    },
+
+    async fetchApi(url, method, body) {
       const response = await fetch(`https://webdev-music-003b5b991590.herokuapp.com${url}`, {
         method,
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          ...(this.isAuthenticated && { 'Authorization': `Bearer ${this.user?.id}` })
+          ...(this.isAuth && { 'Authorization': `Bearer ${this.user?.id}` })
         },
-        body: body ? JSON.stringify(body) : null
-      })
-      
-      const data = await response.json()
-      
+        body: JSON.stringify(body)
+      });
+
       if (!response.ok) {
-        let errorMessage = data.message
-        switch(response.status) {
-          case 403:
-            errorMessage = 'Пользователь с таким email уже существует'
-            break
-          case 401:
-            errorMessage = 'Неверные учетные данные'
-            break
-          case 500:
-            errorMessage = 'Ошибка сервера'
-            break
-        }
-        throw new Error(errorMessage)
+        const error = await response.json();
+        throw new Error(error.message);
       }
-      
-      return data
+      return response.json();
     }
   }
-})
+});

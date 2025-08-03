@@ -1,5 +1,5 @@
 <template>
-  <NuxtLayout name="default">
+  
     <div class="content-wrapper">
       <h2 class="centerblock__h2">Треки</h2>
       
@@ -13,7 +13,7 @@
         />
       </div>
     </div>
-  </NuxtLayout>
+  
 </template>
 
 <script setup>

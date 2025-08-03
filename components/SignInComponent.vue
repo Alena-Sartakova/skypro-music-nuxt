@@ -91,17 +91,14 @@ const validateEmail = (email) => {
 
 const handleSubmit = async () => {
   try {
-    // Сброс предыдущих ошибок
     userStore.error = null;
 
-    // Базовые проверки
     if (!email.value || !password.value) {
       userStore.error = "Заполните все обязательные поля";
       return;
     }
 
     if (isSignUp.value) {
-      // Валидация для регистрации
       if (password.value !== confirmPassword.value) {
         userStore.error = "Пароли не совпадают";
         return;
@@ -112,33 +109,27 @@ const handleSubmit = async () => {
         return;
       }
 
-      // Вызов метода регистрации
-      await userStore.signup({
+      // Обновленный вызов для регистрации
+      await userStore.setUser({
         email: email.value,
         password: password.value,
-        username: email.value.split('@')[0] // Генерируем username из email
+        username: email.value.split('@')[0]
       });
-
-      // Перенаправление после успешной регистрации на главную страницу
-      router.push('/');
     } else {
-      // Валидация для входа
       if (!validateEmail(email.value)) {
         userStore.error = "Введите корректный email";
         return;
       }
 
-      // Вызов метода авторизации
-      await userStore.login({
+      // Обновленный вызов для входа
+      await userStore.setUser({
         email: email.value,
         password: password.value
       });
-
-      // Перенаправление после успешного входа
-      router.push('/');
     }
+
+    router.push('/');
   } catch (error) {
-    // Ошибки уже обработаны в хранилище
     console.error('Ошибка:', error.message);
   }
 };

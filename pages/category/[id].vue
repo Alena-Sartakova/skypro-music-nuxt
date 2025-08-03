@@ -1,5 +1,5 @@
 <template>
-  <NuxtLayout name="default">
+  <div class="content-wrapper">
     <h2 class="centerblock__h2">{{ playlistTitle }}</h2>
 
     <div v-if="error" class="error">Ошибка: {{ error }}</div>
@@ -9,7 +9,7 @@
       :pending="tracksStore.pending"
       :error="tracksStore.error"
     />
-  </NuxtLayout>
+  </div>
 </template>
 
 <script setup>
