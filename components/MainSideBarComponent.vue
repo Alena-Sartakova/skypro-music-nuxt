@@ -17,7 +17,7 @@
           :class="{ active: $route.params.id === playlist.id }"
         >
           <NuxtLink class="sidebar__link" :to="`/category/${playlist.id}`">
-            <img
+            <NuxtImg
               class="sidebar__img"
               :src="getImagePath(playlist.image)"
               :alt="playlist.title"
@@ -30,6 +30,8 @@
 </template>
 
 <script setup>
+import { NuxtImg } from '#components';
+
 const playlists = [
   {
     id: "day",
@@ -50,7 +52,7 @@ const playlists = [
 
 // Функция для формирования пути к изображению
 const getImagePath = (imageName) => {
-  return `/_nuxt/assets/img/${imageName}`;
+  return `/assets/img/${imageName}`;
 };
 </script>
 
@@ -96,7 +98,7 @@ const getImagePath = (imageName) => {
 
 .sidebar__block {
   height: 100%;
-  padding: 240px 0 0 0;
+  padding: 140px 0 0 0;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;

@@ -3,7 +3,11 @@
     <div class="playlist__track track">
       <div class="track__title">
         <div class="track__title-image">
-          <svg class="track__title-svg">
+           <div 
+            v-if="isActive"
+            class="playing-dot"
+          ></div>
+          <svg class="track__title-svg" :class="{ 'active-track': isActive }">
             <use xlink:href="#icon-note"></use>
           </svg>
         </div>
@@ -84,6 +88,10 @@ const handleTrackClick = async () => {
  playerStore.setPlaying(false);
  }
 };
+
+const isActive = computed(() => 
+  playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
+);
 </script>
 
 
@@ -134,6 +142,25 @@ const handleTrackClick = async () => {
   -ms-flex-pack: center;
   justify-content: center;
   margin-right: 17px;
+  position: relative;
+}
+
+.playing-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-color: #b672ff;
+  border-radius: 8px;
+  animation: bubble_out 0.6s ease-in-out infinite both;
+  z-index: 1;
+}
+
+@keyframes bubble_out {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.5); }
+  50% { transform: translate(-50%, -50%) scale(1); }
 }
 
 .track__title-svg {
