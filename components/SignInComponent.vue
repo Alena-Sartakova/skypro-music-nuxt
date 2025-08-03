@@ -15,21 +15,17 @@
             </div>
           </NuxtLink>
 
-          <!-- Уведомления -->
-          <div v-if="successMessage" class="success-message">
-            {{ successMessage }}
-          </div>
+          <!-- Блок отображения ошибок -->
           <div v-if="userStore.error" class="error-message">
             {{ userStore.error }}
           </div>
 
-          <!-- Поля формы -->
           <input
             v-model.trim="email"
             class="modal__input"
             type="email"
             placeholder="Почта"
-            :disabled="userStore.loading"
+            @input="userStore.error = null"
           />
 
           <input
@@ -37,7 +33,7 @@
             class="modal__input"
             type="password"
             placeholder="Пароль"
-            :disabled="userStore.loading"
+            @input="userStore.error = null"
           />
 
           <input
@@ -46,19 +42,18 @@
             class="modal__input"
             type="password"
             placeholder="Повторите пароль"
-            :disabled="userStore.loading"
+            @input="userStore.error = null"
           />
 
-          <!-- Кнопки -->
-          <button
-            class="modal__btn-submit"
+          <button 
+            class="modal__btn-submit" 
             type="submit"
             :disabled="userStore.loading"
           >
-            <template v-if="!userStore.loading">
+            <span v-if="!userStore.loading">
               {{ isSignUp ? "Зарегистрироваться" : "Войти" }}
-            </template>
-            <div v-else class="loader"></div>
+            </span>
+            <span v-else>Обработка...</span>
           </button>
 
           <button
@@ -66,7 +61,6 @@
             class="modal__btn-switch"
             type="button"
             @click="$router.push('/signup')"
-            :disabled="userStore.loading"
           >
             Зарегистрироваться
           </button>
@@ -77,9 +71,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/useUser";
+import { ref, computed, onMounted } from "vue";
+import { useUserStore } from '~/stores/useUser';
 
 const route = useRoute();
 const router = useRouter();
@@ -89,90 +82,71 @@ const isSignUp = computed(() => route.path.includes("signup"));
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
-const successMessage = ref("");
 
-const validateForm = () => {
-  userStore.error = null;
-
-  if (!email.value.trim() || !password.value.trim()) {
-    userStore.error = "Заполните email и пароль";
-    return false;
-  }
-
-  if (isSignUp.value) {
-    if (!confirmPassword.value.trim()) {
-      userStore.error = "Заполните поле подтверждения пароля";
-      return false;
-    }
-    if (password.value !== confirmPassword.value) {
-      userStore.error = "Пароли не совпадают";
-      return false;
-    }
-    if (password.value.length < 6) {
-      userStore.error = "Пароль должен содержать минимум 6 символов";
-      return false;
-    }
-  }
-
-  return true;
+// Валидация email
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 };
 
 const handleSubmit = async () => {
-  if (!validateForm()) return;
-
   try {
-    const credentials = {
-      email: email.value,
-      password: password.value,
-    };
+    // Сброс предыдущих ошибок
+    userStore.error = null;
 
-    // Логирование отправляемых данных
-    console.log("Отправка данных в API:", {
-      type: isSignUp.value ? "Регистрация" : "Вход",
-      data: isSignUp.value 
-        ? { ...credentials, username: email.value.split("@")[0] }
-        : credentials
-    });
-
-    let apiResponse;
-    if (isSignUp.value) {
-      apiResponse = await userStore.signup({
-        ...credentials,
-        username: email.value.split("@")[0]
-      });
-    } else {
-      apiResponse = await userStore.login(credentials);
+    // Базовые проверки
+    if (!email.value || !password.value) {
+      userStore.error = "Заполните все обязательные поля";
+      return;
     }
 
-    // Логирование ответа API
-    console.log("Ответ API:", {
-      status: "success",
-      data: apiResponse,
-      isAuthenticated: userStore.isAuthenticated
-    });
+    if (isSignUp.value) {
+      // Валидация для регистрации
+      if (password.value !== confirmPassword.value) {
+        userStore.error = "Пароли не совпадают";
+        return;
+      }
 
-    if (userStore.isAuthenticated) {
-      successMessage.value = isSignUp.value
-        ? "Регистрация прошла успешно! Перенаправляем..."
-        : "Вход выполнен! Перенаправляем...";
-      
-      setTimeout(() => {
-        router.replace("/");
-        successMessage.value = "";
-      }, 1500);
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      // Вызов метода регистрации
+      await userStore.signup({
+        email: email.value,
+        password: password.value,
+        username: email.value.split('@')[0] // Генерируем username из email
+      });
+
+      // Перенаправление после успешной регистрации на главную страницу
+      router.push('/');
+    } else {
+      // Валидация для входа
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      // Вызов метода авторизации
+      await userStore.login({
+        email: email.value,
+        password: password.value
+      });
+
+      // Перенаправление после успешного входа
+      router.push('/');
     }
   } catch (error) {
-    console.error("Ошибка API:", {
-      status: "error",
-      message: error.message,
-      response: error.response?.data
-    });
-    
-    if (isSignUp.value) email.value = "";
-    password.value = "";
-    confirmPassword.value = "";
+    // Ошибки уже обработаны в хранилище
+    console.error('Ошибка:', error.message);
   }
 };
+
+// Очистка ошибок при размонтировании
+onMounted(() => {
+  userStore.error = null;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -206,16 +180,10 @@ const handleSubmit = async () => {
   font-size: 16px;
   color: #333;
   background-color: transparent;
-  transition: border-color 0.3s ease;
 
   &:focus {
     border-color: #580ea2;
     outline: none;
-  }
-
-  &:disabled {
-    background-color: #f5f5f5;
-    cursor: not-allowed;
   }
 }
 
@@ -228,19 +196,10 @@ const handleSubmit = async () => {
   border-radius: 6px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease, opacity 0.3s ease;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: background-color 0.3s ease;
 
-  &:hover:not(:disabled) {
+  &:hover {
     background-color: #3f007d;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
 }
 
@@ -255,13 +214,8 @@ const handleSubmit = async () => {
   cursor: pointer;
   transition: all 0.3s ease;
 
-  &:hover:not(:disabled) {
+  &:hover {
     background-color: #d0cece;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
 }
 
@@ -274,66 +228,13 @@ const handleSubmit = async () => {
     height: auto;
   }
 }
-
-.success-message {
-  background: #e8f5e9;
-  color: #2e7d32;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  border: 1px solid #a5d6a7;
-  animation: slideIn 0.3s ease;
-}
-
 .error-message {
-  background: #ffebee;
-  color: #c62828;
+  color: #ff4d4d;
+  background: #ffe6e6;
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 16px;
-  border: 1px solid #ffcdd2;
-  animation: shake 0.4s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.loader {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 480px) {
-  .modal__block {
-    width: 90%;
-    padding: 25px;
-    margin: 0 auto;
-  }
-
-  .modal__form-login {
-    gap: 15px;
-  }
+  border: 1px solid #ffcccc;
+  font-size: 14px;
 }
 </style>

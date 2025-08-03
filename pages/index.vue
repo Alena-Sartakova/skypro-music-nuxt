@@ -19,16 +19,26 @@
 <script setup>
 import { useTracksStore } from '~/stores/useTracks';
 import { usePlayerStore } from "~/stores/player";
+import { useUserStore } from "~/stores/useUser"; // Добавляем импорт хранилища
 
-const tracksStore = useTracksStore()
+const tracksStore = useTracksStore();
 const playerStore = usePlayerStore();
+const userStore = useUserStore(); // Инициализируем хранилище пользователя
 
 onMounted(async () => {
+  // Проверяем авторизацию пользователя
+  if (userStore.isAuthenticated) {
+    console.log('Данные авторизованного пользователя:', {
+      email: userStore.user?.email,
+      username: userStore.user?.username,
+      id: userStore.user?.id
+    });
+  }
+
   if (tracksStore.rawTracks.length === 0) {
     await tracksStore.fetchTracks();
   }
   
-  // Основная фикс: синхронизация плейлиста при загрузке
   if (playerStore.playlist.length === 0) {
     playerStore.setPlaylist(tracksStore.filteredTracks);
   }
@@ -42,4 +52,5 @@ useHead({
   ]
 })
 </script>
+
 <style></style>

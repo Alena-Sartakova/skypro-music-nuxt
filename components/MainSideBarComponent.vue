@@ -1,12 +1,16 @@
 <template>
   <div class="main__sidebar sidebar">
     <div class="sidebar__personal">
-      <p class="sidebar__personal-name">Sergey.Ivanov</p>
-      <div class="sidebar__icon">
+      <p class="sidebar__personal-name">{{ username }}</p>
+      <NuxtLink 
+        to="/signin" 
+        class="sidebar__icon"
+        @click="handleLogout"
+      >
         <svg>
           <use xlink:href="#logout" />
         </svg>
-      </div>
+      </NuxtLink>
     </div>
     <div class="sidebar__block">
       <div class="sidebar__list">
@@ -31,7 +35,18 @@
 
 <script setup>
 import { NuxtImg } from '#components';
+import { storeToRefs } from 'pinia'
+import { useUserStore } from "~/stores/useUser"
 
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
+const username = computed(() => user.value?.username || 'Гость')
+
+// Выход из системы
+const handleLogout = () => {
+  userStore.logout()
+  router.push('/signin')
+}
 const playlists = [
   {
     id: "day",

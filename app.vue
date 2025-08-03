@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import IconSprite from './components/IconSprite.vue';
-
-</script>
 
 <template>
   <div>
@@ -9,3 +5,11 @@ import IconSprite from './components/IconSprite.vue';
     <NuxtPage />
   </div>
 </template>
+
+<script setup lang="ts">
+import IconSprite from './components/IconSprite.vue';
+
+
+
+
+</script>
