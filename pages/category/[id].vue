@@ -14,7 +14,6 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { useHead } from "@unhead/vue";
 
 const route = useRoute();
 const tracksStore = useTracksStore();

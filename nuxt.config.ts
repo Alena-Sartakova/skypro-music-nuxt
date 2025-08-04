@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   css: ["/assets/styles/main.css"], 
-  modules: ["@nuxt/eslint", "@nuxt/test-utils", "nuxt-icons", "@nuxtjs/google-fonts", '@pinia/nuxt', '@nuxt/image'],
+  modules: ["@nuxt/eslint", "@nuxt/test-utils", '@pinia/nuxt', '@nuxt/image'],
   image: {
     provider: 'ipx'
   }
