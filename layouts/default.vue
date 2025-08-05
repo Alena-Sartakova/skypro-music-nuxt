@@ -30,7 +30,7 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const excludedRoutes = ['/signin']
+const excludedRoutes = ['/signin', '/signup']
 const showMainLayout = computed(() => !excludedRoutes.includes(route.path))
 </script>
 
