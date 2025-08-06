@@ -1,28 +1,37 @@
 <template>
-<div class="wrapper">
-    <div class="container">
-      <div class="main">
-        <NavbarComponent/>
+  <div class="wrapper">
+    <template v-if="showMainLayout">
+      <div class="container">
+        <div class="main">
+          <NavbarComponent />
           <div class="main__centerblock">
             <SearchComponent />
             <div class="content-container">
               <slot></slot>
             </div>
           </div>
-        <MainSideBarComponent />
+          <MainSideBarComponent />
         </div>
-      <PlayerBarComponent />
+        <PlayerBarComponent />
+      </div>
+      <footer class="footer"></footer>
+    </template>
+    <div v-else class="auth-layout">
+      <slot></slot>
     </div>
-    <footer class="footer"></footer>
   </div>
 </template>
 
 <script setup>
-import MainSideBarComponent from '~/components/MainSideBarComponent.vue';
-import NavbarComponent from '~/components/NavbarComponent.vue';
-import PlayerBarComponent from '~/components/PlayerBarComponent.vue';
+import MainSideBarComponent from "~/components/MainSideBarComponent.vue";
+import NavbarComponent from "~/components/NavbarComponent.vue";
+import PlayerBarComponent from "~/components/PlayerBarComponent.vue";
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 
+const excludedRoutes = ['/signin', '/signup']
+const showMainLayout = computed(() => !excludedRoutes.includes(route.path))
 </script>
 
 <style lang="scss" scoped>
@@ -48,4 +57,5 @@ import PlayerBarComponent from '~/components/PlayerBarComponent.vue';
   padding: 20px 20px calc(111px - 20px);
   margin-left: 0;
 }
+
 </style>

@@ -1,5 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { 
+  formatDuration,
+  filterTracks,
+  getAvailableFilters,
+  updateFilters,
+  resetFilters
+} from '@/utils/tracksUtils'
 
 export const useTracksStore = defineStore('tracks', {
   state: () => ({
@@ -18,13 +25,13 @@ export const useTracksStore = defineStore('tracks', {
     async fetchTracks() {
       this.pending = true
       try {
-        const { data } = await $fetch('https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/' , { lazy: true })
+        const { data } = await $fetch('https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/', { lazy: true })
         this.rawTracks = data.map(track => ({
           id: track._id,
           title: track.name || "Без названия",
           author: track.author || "Неизвестный исполнитель",
           album: track.album || "Без альбома",
-          duration: this.formatDuration(track.duration_in_seconds),
+          duration: formatDuration(track.duration_in_seconds),
           release_date: track.release_date?.slice(0,4) || "Неизвестно",
           genre: Array.isArray(track.genre) ? track.genre : [track.genre || "Неизвестно"],
           track_file: track.track_file || ""
@@ -36,61 +43,18 @@ export const useTracksStore = defineStore('tracks', {
       }
     },
 
-    formatDuration(seconds) {
-      const minutes = Math.floor(seconds / 60)
-      const remainingSeconds = seconds % 60
-      return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
-    },
-
     updateFilter(payload) {
-      this.filters = { ...this.filters, ...payload }
+      this.filters = updateFilters(this.filters, payload)
     },
 
     resetFilters() {
-      this.filters = {
-        author: '',
-        genre: '',
-        year: '',
-        search: ''
-      }
+      this.filters = resetFilters()
     }
   },
 
   getters: {
-    filteredTracks: (state) => {
-      return state.rawTracks.filter(track => {
-        const matchesSearch = track.title.toLowerCase().includes(state.filters.search.toLowerCase()) ||
-                              track.author.toLowerCase().includes(state.filters.search.toLowerCase())
-        
-        const matchesAuthor = !state.filters.author || 
-          track.author === state.filters.author
-        
-        const matchesYear = !state.filters.year || 
-          track.release_date === state.filters.year
-        
-        const matchesGenre = !state.filters.genre || 
-          track.genre.includes(state.filters.genre)
-
-        return matchesSearch && matchesAuthor && matchesYear && matchesGenre
-      })
-    },
-
-    availableFilters: (state) => {
-      const authors = new Set()
-      const years = new Set()
-      const genres = new Set()
-
-      state.rawTracks.forEach(track => {
-        authors.add(track.author)
-        years.add(track.release_date)
-        track.genre.forEach(g => genres.add(g))
-      })
-
-      return {
-        authors: Array.from(authors).sort(),
-        years: Array.from(years).sort().reverse(),
-        genres: Array.from(genres).sort()
-      }
-    }
+    filteredTracks: (state) => filterTracks(state.rawTracks, state.filters),
+    
+    availableFilters: (state) => getAvailableFilters(state.rawTracks)
   }
 })

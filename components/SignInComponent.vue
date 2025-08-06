@@ -15,11 +15,17 @@
             </div>
           </NuxtLink>
 
+          <!-- Блок отображения ошибок -->
+          <div v-if="userStore.error" class="error-message">
+            {{ userStore.error }}
+          </div>
+
           <input
             v-model.trim="email"
             class="modal__input"
             type="email"
             placeholder="Почта"
+            @input="userStore.error = null"
           />
 
           <input
@@ -27,6 +33,7 @@
             class="modal__input"
             type="password"
             placeholder="Пароль"
+            @input="userStore.error = null"
           />
 
           <input
@@ -35,10 +42,18 @@
             class="modal__input"
             type="password"
             placeholder="Повторите пароль"
+            @input="userStore.error = null"
           />
 
-          <button class="modal__btn-submit" type="submit">
-            {{ isSignUp ? "Зарегистрироваться" : "Войти" }}
+          <button 
+            class="modal__btn-submit" 
+            type="submit"
+            :disabled="userStore.loading"
+          >
+            <span v-if="!userStore.loading">
+              {{ isSignUp ? "Зарегистрироваться" : "Войти" }}
+            </span>
+            <span v-else>Обработка...</span>
           </button>
 
           <button
@@ -56,43 +71,73 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { showError } from "#app";
-import { NuxtImg } from "#components";
+import { ref, computed, onMounted } from "vue";
+
 
 const route = useRoute();
 const router = useRouter();
-const isSignUp = computed(() => route.path.includes("signup"));
+const userStore = useUserStore();
 
-// Используем отдельные ref вместо объекта form
+const isSignUp = computed(() => route.path.includes("signup"));
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 
-const handleSubmit = () => {
-  if (!email.value.trim() || !password.value.trim()) {
-    showError({
-      statusCode: 400,
-      message: "Заполните email и пароль",
-    });
-    return;
-  }
-
-  if (isSignUp.value && !confirmPassword.value.trim()) {
-    showError({
-      statusCode: 400,
-      message: "Заполните поле подтверждения пароля",
-    });
-    return;
-  }
-
-  console.log("Форма отправлена:", {
-    email: email.value,
-    password: password.value,
-    confirmPassword: confirmPassword.value,
-  });
-  router.push("/");
+// Валидация email
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 };
+
+const handleSubmit = async () => {
+  try {
+    userStore.error = null;
+
+    if (!email.value || !password.value) {
+      userStore.error = "Заполните все обязательные поля";
+      return;
+    }
+
+    if (isSignUp.value) {
+      if (password.value !== confirmPassword.value) {
+        userStore.error = "Пароли не совпадают";
+        return;
+      }
+
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      // Обновленный вызов для регистрации
+      await userStore.setUser({
+        email: email.value,
+        password: password.value,
+        username: email.value.split('@')[0]
+      });
+    } else {
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      // Обновленный вызов для входа
+      await userStore.setUser({
+        email: email.value,
+        password: password.value
+      });
+    }
+
+    router.push('/');
+  } catch (error) {
+    console.error('Ошибка:', error.message);
+  }
+};
+
+// Очистка ошибок при размонтировании
+onMounted(() => {
+  userStore.error = null;
+});
 </script>
 
 <style lang="scss" scoped>

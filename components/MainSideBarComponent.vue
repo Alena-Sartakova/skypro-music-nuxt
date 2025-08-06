@@ -1,15 +1,19 @@
 <template>
   <div class="main__sidebar sidebar">
     <div class="sidebar__personal">
-      <p class="sidebar__personal-name">Sergey.Ivanov</p>
-      <div class="sidebar__icon">
+      <p v-if="username && !userStore.loading">{{ username }}</p>
+      <p v-else>{{ username }}</p>
+    
+      
+      <NuxtLink to="/signin" class="sidebar__icon" @click="handleLogout">
         <svg>
           <use xlink:href="#logout" />
         </svg>
-      </div>
+      </NuxtLink>
     </div>
     <div class="sidebar__block">
       <div class="sidebar__list">
+        
         <div
           v-for="playlist in playlists"
           :key="playlist.id"
@@ -30,8 +34,22 @@
 </template>
 
 <script setup>
-import { NuxtImg } from '#components';
+import { NuxtImg } from "#components";
+import { storeToRefs } from "pinia";
+import { useUserStore } from "~/stores/useUser";
 
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
+// Добавляем проверку на существование пользователя
+const username = computed(() => {
+  return user.value?.username || null;
+});
+
+// Выход из системы
+const handleLogout = () => {
+  userStore.clearUser();
+  router.push("/signin");
+};
 const playlists = [
   {
     id: "day",
@@ -141,5 +159,19 @@ const getImagePath = (imageName) => {
 .sidebar__img {
   width: 100%;
   height: auto;
+}
+
+.username-skeleton {
+  width: 120px;
+  height: 24px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 400% 100%;
+  border-radius: 4px;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 </style>
