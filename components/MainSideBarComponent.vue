@@ -2,10 +2,10 @@
   <div class="main__sidebar sidebar">
     <div class="sidebar__personal">
       <p v-if="username && !userStore.loading">{{ username }}</p>
-      <p v-else>{{ username }}</p>
+      <p v-else>{{ userStore.loading ? 'Загрузка...' : 'Гость' }} </p>
     
       
-      <NuxtLink to="/signin" class="sidebar__icon" @click="handleLogout">
+      <NuxtLink to="/signin" class="sidebar__icon" @click.prevent="handleLogout">
         <svg>
           <use xlink:href="#logout" />
         </svg>
@@ -46,9 +46,13 @@ const username = computed(() => {
 });
 
 // Выход из системы
-const handleLogout = () => {
-  userStore.clearUser();
-  router.push("/signin");
+const handleLogout = async () => {
+  try {
+    await userStore.clearUser();
+    router.push('/signin');
+  } catch (error) {
+    console.error('Ошибка при выходе:', error);
+  }
 };
 const playlists = [
   {

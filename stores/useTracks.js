@@ -42,6 +42,47 @@ export const useTracksStore = defineStore('tracks', {
         this.pending = false
       }
     },
+ async fetchFavoriteTracks() {
+  try {
+    this.pending = true;
+    const userStore = useUserStore();
+    
+    const response = await $fetch(
+      'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/favorite/all/', 
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${userStore.accessToken}`
+        }
+      }
+    );
+
+    // Проверка и преобразование структуры ответа
+    const rawData = response?.data || response;
+    
+    if (!Array.isArray(rawData)) {
+      throw new Error('Сервер вернул данные в неожиданном формате');
+    }
+
+    this.rawTracks = rawData.map(track => ({
+      id: track._id,
+      title: track.name || "Без названия",
+      author: track.author || "Неизвестный исполнитель",
+      album: track.album || "Без альбома",
+      duration: formatDuration(track.duration_in_seconds),
+      release_date: track.release_date?.slice(0,4) || "Неизвестно",
+      genre: Array.isArray(track.genre) ? track.genre : [track.genre || "Неизвестно"],
+      track_file: track.track_file || ""
+    }));
+    
+    this.error = null;
+  } catch (error) {
+    console.error('Ошибка обработки:', error);
+    this.error = error.data?.message || error.message;
+    this.rawTracks = []; // Сброс списка треков
+  } finally {
+    this.pending = false;
+  }},
 
     updateFilter(payload) {
       this.filters = updateFilters(this.filters, payload)
