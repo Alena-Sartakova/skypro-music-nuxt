@@ -14,44 +14,30 @@ export const useUserStore = defineStore('user', {
     async setUser(credentials) {
       try {
         this.loading = true;
-        const isSignup = !!credentials.username;
-        const endpoint = isSignup ? '/user/signup/' : '/user/login/';
+        const endpoint = credentials.username ? '/user/signup/' : '/user/login/';
 
-        // 1. Регистрация/авторизация
-        const authResponse = await this.fetchApi(endpoint, 'POST', credentials);
-        
-        // 2. Получение токенов
-        const { email, password } = credentials;
-        const tokenResponse = await this.fetchApi('/user/token/', 'POST', {
-          email,
-          password
-        });
+        const [authResponse, tokenResponse] = await Promise.all([
+          this.fetchApi(endpoint, 'POST', credentials, false),
+          this.fetchApi('/user/token/', 'POST', {
+            email: credentials.email,
+            password: credentials.password
+          }, false)
+        ]);
 
-        // 3. Сохранение данных
-        const userData = {
+        this.user = {
           id: authResponse.result?._id || authResponse._id,
           email: authResponse.result?.email || authResponse.email,
           username: authResponse.result?.username || authResponse.username
         };
-
-        this.user = userData;
         this.accessToken = tokenResponse.access;
         this.refreshToken = tokenResponse.refresh;
         this.isAuth = true;
 
         this.saveToStorage({
-          ...userData,
+          ...this.user,
           accessToken: tokenResponse.access,
           refreshToken: tokenResponse.refresh
         });
-
-        // 4. Вывод в консоль
-        console.log('Успешная авторизация. Данные:', {
-          user: userData,
-          accessToken: tokenResponse.access,
-          refreshToken: tokenResponse.refresh
-        });
-
       } catch (error) {
         this.error = this.getErrorMessage(error);
         throw error;
@@ -60,59 +46,17 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-  async clearUser() {
-    try {
-      // Отправка запроса на сервер для логаута
-      await this.fetchApi('/user/logout/', 'POST');
-    } catch (error) {
-      console.warn('Ошибка при выходе:', error);
-    }
-
-    // Сброс состояния
-    this.user = null;
-    this.accessToken = null;
-    this.refreshToken = null;
-    this.isAuth = false;
-
-    // Очистка хранилища
-    this.removeFromStorage();
-
-    // Очистка кэша Nuxt
-    if (import.meta.env.MODE === 'client') {
-      localStorage.removeItem('nuxt:reload');
-      sessionStorage.clear();
-    }
-  },
-
-  removeFromStorage() {
-    localStorage.removeItem('user');
-    // Дополнительные хранилища
-    if (import.meta.env.MODE === 'client') {
-      localStorage.removeItem('vuex');
-      indexedDB.deleteDatabase('localforage');
-    }
-  },
-
-    restoreUser() {
-      if (typeof window === 'undefined') return;
-
-      const storedData = localStorage.getItem('user');
-      if (!storedData) return;
-
+    async clearUser() {
       try {
-        const parsedData = JSON.parse(storedData);
-        if (this.isValidUser(parsedData)) {
-          this.user = {
-            id: parsedData.id,
-            email: parsedData.email,
-            username: parsedData.username
-          };
-          this.accessToken = parsedData.accessToken;
-          this.refreshToken = parsedData.refreshToken;
-          this.isAuth = true;
-        }
-      } catch {
+        // Убрали вызов несуществующего эндпоинта /user/logout/
+        // Оставляем только очистку состояния и хранилища
+      } finally {
+        this.$reset();
         this.removeFromStorage();
+        
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
+          window.location.href = '/signin';
+        }
       }
     },
 
@@ -126,38 +70,86 @@ export const useUserStore = defineStore('user', {
       }));
     },
 
-    isValidUser(data) {
-      return !!data?.id && 
-             !!data?.email && 
-             !!data?.username && 
-             !!data?.accessToken && 
-             !!data?.refreshToken;
+    removeFromStorage() {
+      localStorage.removeItem('user');
+      sessionStorage.clear();
+      indexedDB.deleteDatabase('localforage');
+      document.cookie.split(';').forEach(cookie => {
+        const name = cookie.split('=')[0].trim();
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      });
     },
 
-    async fetchApi(url, method, body) {
-      const headers = {
-        'Content-Type': 'application/json',
-      };
+    restoreUser() {
+      if (typeof window === 'undefined') return;
 
-      // Добавляем Authorization header если есть токен
-      if (this.accessToken) {
+      if (window.location.pathname.startsWith('/sign')) {
+        return;
+      }
+
+      try {
+        const storedData = localStorage.getItem('user');
+        if (!storedData) return;
+
+        const parsedData = JSON.parse(storedData);
+        if (this.isValidUser(parsedData) && this.isTokenValid(parsedData.accessToken)) {
+          this.user = parsedData;
+          this.accessToken = parsedData.accessToken;
+          this.refreshToken = parsedData.refreshToken;
+          this.isAuth = true;
+        } else {
+          this.clearUser();
+        }
+      } catch {
+        this.clearUser();
+      }
+    },
+
+    isValidUser(data) {
+      return !!data?.id && !!data?.email && !!data?.username && !!data?.accessToken && !!data?.refreshToken;
+    },
+
+    isTokenValid(token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp * 1000 > Date.now();
+      } catch {
+        return false;
+      }
+    },
+
+    async fetchApi(url, method, body, authRequired = false) {
+      const headers = { 'Content-Type': 'application/json' };
+
+      if (authRequired && this.accessToken && !window.location.pathname.includes('/signin')) {
         headers.Authorization = `Bearer ${this.accessToken}`;
       }
 
       const response = await fetch(
-        `https://webdev-music-003b5b991590.herokuapp.com${url}`, 
-        {
-          method,
-          headers,
-          body: JSON.stringify(body)
-        }
+        `https://webdev-music-003b5b991590.herokuapp.com${url}`,
+        { method, headers, body: JSON.stringify(body) }
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Unknown error');
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Unknown error occurred';
+
+        try {
+          const errorData = contentType?.includes('application/json') 
+            ? await response.json() 
+            : await response.text();
+          errorMessage = typeof errorData === 'object' ? errorData.message : errorData;
+        } catch {
+          errorMessage = `HTTP error ${response.status}: ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
       return response.json();
+    },
+
+    getErrorMessage(error) {
+      return error.message || 'Ошибка при аутентификации';
     }
   }
 });

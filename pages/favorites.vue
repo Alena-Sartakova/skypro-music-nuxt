@@ -43,11 +43,11 @@ onMounted(async () => {
       return;
     }
 
-    console.log("Данные пользователя:", {
+/*     console.log("Данные пользователя:", {
       email: userStore.user.email,
       id: userStore.user.id,
       token: userStore.accessToken,
-    });
+    }); */
 
     // Загрузка избранных треков
     await tracksStore.fetchFavoriteTracks();
@@ -74,4 +74,40 @@ useHead({
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.content-wrapper {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .centerblock__h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+
+  .error-message {
+    color: #ff4d4d;
+    padding: 15px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #ff4d4d;
+  }
+
+  .tracks-scroll-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+  }
+}
+</style>

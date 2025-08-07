@@ -25,7 +25,8 @@
             class="modal__input"
             type="email"
             placeholder="Почта"
-            @input="userStore.error = null"
+            autocomplete="email"
+            @input="userStore.error = null" 
           />
 
           <input
@@ -33,7 +34,8 @@
             class="modal__input"
             type="password"
             placeholder="Пароль"
-            @input="userStore.error = null"
+            autocomplete="current-password"
+            @input="userStore.error = null" 
           />
 
           <input
@@ -134,9 +136,10 @@ const handleSubmit = async () => {
   }
 };
 
-// Очистка ошибок при размонтировании
 onMounted(() => {
-  userStore.error = null;
+  if (userStore.isAuth) {
+    userStore.clearUser();
+  }
 });
 </script>
 

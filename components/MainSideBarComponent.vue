@@ -37,6 +37,8 @@
 import { NuxtImg } from "#components";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "~/stores/useUser";
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
@@ -49,9 +51,11 @@ const username = computed(() => {
 const handleLogout = async () => {
   try {
     await userStore.clearUser();
-    router.push('/signin');
+    if (router.currentRoute.value.path !== '/signin') {
+      router.replace('/signin');
+    }
   } catch (error) {
-    console.error('Ошибка при выходе:', error);
+    console.error('Logout failed:', error);
   }
 };
 const playlists = [
