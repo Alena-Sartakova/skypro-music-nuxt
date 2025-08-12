@@ -80,18 +80,7 @@
               </div>
             </div>
 
-            <div class="track-play__like-dis">
-              <div class="track-play__like _btn-icon">
-                <svg class="track-play__like-svg">
-                  <use xlink:href="#icon-like"></use>
-                </svg>
-              </div>
-              <div class="track-play__dislike _btn-icon">
-                <svg class="track-play__dislike-svg">
-                  <use xlink:href="#icon-dislike"></use>
-                </svg>
-              </div>
-            </div>
+
           </div>
         </div>
         <div class="bar__volume-block volume">
@@ -282,7 +271,7 @@ onMounted(() => initPlayer(audioRef.value));
   padding: 5px;
   display: flex;
   align-items: center;
-  transition: all 0.3s ease; 
+  transition: all 0.3s ease;
 }
 
 .player__btn-prev {
@@ -318,7 +307,7 @@ onMounted(() => initPlayer(audioRef.value));
 
 .player__btn-repeat {
   margin-right: 24px;
-  
+
   // Иконка повтора
   &-svg {
     width: 18px;
@@ -357,12 +346,11 @@ onMounted(() => initPlayer(audioRef.value));
   svg {
     filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
   }
-  
+
   &:hover {
     transform: scale(1.05);
   }
 }
-
 
 .player__track-play {
   display: -webkit-box;
@@ -444,42 +432,6 @@ onMounted(() => initPlayer(audioRef.value));
   color: #ffffff;
 }
 
-.track-play__like-dis {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-  -ms-flex-direction: row;
-  flex-direction: row;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  margin-left: 26%;
-}
-
-.track-play__like,
-.track-play__dislike {
-  padding: 5px;
-}
-
-.track-play__like-svg {
-  width: 14px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
-}
-
-.track-play__dislike {
-  margin-left: 28.5px;
-}
-
-.track-play__dislike-svg {
-  width: 14.34px;
-  height: 13px;
-  fill: transparent;
-  stroke: #696969;
-}
 
 .volume__content {
   display: -webkit-box;

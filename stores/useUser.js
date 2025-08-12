@@ -11,7 +11,9 @@ export const useUserStore = defineStore('user', {
   }),
 
   actions: {
-    async setUser(credentials) {
+     async setUser(credentials) {
+      const tracksStore = useTracksStore(); // Получаем экземпляр хранилища треков
+      
       try {
         this.loading = true;
         const endpoint = credentials.username ? '/user/signup/' : '/user/login/';
@@ -24,6 +26,7 @@ export const useUserStore = defineStore('user', {
           }, false)
         ]);
 
+        // Обновляем состояние пользователя
         this.user = {
           id: authResponse.result?._id || authResponse._id,
           email: authResponse.result?.email || authResponse.email,
@@ -33,11 +36,16 @@ export const useUserStore = defineStore('user', {
         this.refreshToken = tokenResponse.refresh;
         this.isAuth = true;
 
+        // Сохраняем данные и загружаем избранное
         this.saveToStorage({
           ...this.user,
           accessToken: tokenResponse.access,
           refreshToken: tokenResponse.refresh
         });
+
+        // Загрузка избранных треков после успешной авторизации
+        await tracksStore.initialize(this.accessToken); 
+
       } catch (error) {
         this.error = this.getErrorMessage(error);
         throw error;
@@ -47,9 +55,11 @@ export const useUserStore = defineStore('user', {
     },
 
     async clearUser() {
+      const tracksStore = useTracksStore(); // Получаем экземпляр хранилища треков
+      
       try {
-        // Убрали вызов несуществующего эндпоинта /user/logout/
-        // Оставляем только очистку состояния и хранилища
+        // Очищаем состояние треков
+        tracksStore.$reset();
       } finally {
         this.$reset();
         this.removeFromStorage();
@@ -80,7 +90,9 @@ export const useUserStore = defineStore('user', {
       });
     },
 
-    restoreUser() {
+    async restoreUser() {
+      const tracksStore = useTracksStore(); // Получаем экземпляр хранилища треков
+
       if (typeof window === 'undefined') return;
 
       if (window.location.pathname.startsWith('/sign')) {
@@ -97,11 +109,15 @@ export const useUserStore = defineStore('user', {
           this.accessToken = parsedData.accessToken;
           this.refreshToken = parsedData.refreshToken;
           this.isAuth = true;
+
+          // Загружаем избранное при восстановлении сессии
+          await tracksStore.initialize(this.accessToken);
         } else {
-          this.clearUser();
+          await this.clearUser();
         }
-      } catch {
-        this.clearUser();
+      } catch (error) {
+        console.error('Ошибка восстановления сессии:', error);
+        await this.clearUser();
       }
     },
 

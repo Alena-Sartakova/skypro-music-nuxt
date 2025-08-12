@@ -14,7 +14,7 @@
 
     <div class="tracks-scroll-container">
       <PlaylistComponent
-        :tracks="tracksStore.filteredTracks"
+        :tracks="processedTracks"
         :pending="tracksStore.pending"
         :error="tracksStore.error"
       />
@@ -33,6 +33,13 @@ const router = useRouter();
 const tracksStore = useTracksStore();
 const playerStore = usePlayerStore();
 const userStore = useUserStore();
+
+const processedTracks = computed(() => 
+  tracksStore.filteredTracks.map(t => ({
+    ...t,
+    isFavorite: true // Принудительно устанавливаем для избранного
+  }))
+);
 
 onMounted(async () => {
   try {
@@ -97,7 +104,6 @@ useHead({
 
   .tracks-scroll-container {
     max-height: 70vh;
-    overflow-y: auto;
     padding-right: 10px;
 
     &::-webkit-scrollbar {
