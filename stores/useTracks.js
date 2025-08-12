@@ -96,58 +96,69 @@ export const useTracksStore = defineStore('tracks', {
       }
     },
 
-    async toggleFavorite(trackId) {
-      const userStore = useUserStore();
-      if (!userStore.isAuth) {
-        this.error = 'Требуется авторизация';
-        return;
-      }
+    async toggleFavorite(trackId, isFavoritePage = false) {
+  const userStore = useUserStore();
+  if (!userStore.isAuth) {
+    this.error = 'Требуется авторизация';
+    return;
+  }
 
-      // Глубокое копирование для отката
-      const originalTracks = JSON.parse(JSON.stringify(this.rawTracks));
-      const originalLiked = new Set(this.likedTracks);
-      const wasLiked = originalLiked.has(trackId);
+  const originalLiked = new Set(this.likedTracks);
+  const wasLiked = originalLiked.has(trackId);
 
-      try {
-        // Оптимистичное обновление
-        if (wasLiked) {
-          this.rawTracks = this.rawTracks.filter(t => t.id !== trackId);
-          this.likedTracks.delete(trackId);
-        } else {
-          this.rawTracks = this.rawTracks.map(track => 
-            track.id === trackId ? {
-              ...track,
-              staredUsers: [...track.staredUsers, userStore.userId],
-              isFavorite: true
-            } : track
-          );
-          this.likedTracks.add(trackId);
-        }
+  try {
+    // Оптимистичное обновление только лайков
+    if (wasLiked) {
+      this.likedTracks.delete(trackId);
+    } else {
+      this.likedTracks.add(trackId);
+    }
 
-        // Отправка запроса
-        await $fetch(
-          `https://webdev-music-003b5b991590.herokuapp.com/catalog/track/${trackId}/favorite/`, 
-          {
-            method: wasLiked ? 'DELETE' : 'POST',
-            headers: {
-              Authorization: `Bearer ${userStore.accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ userId: userStore.userId })
-          }
-        );
+    // Обновляем состояние только для видимых треков
+    this.rawTracks = this.rawTracks.map(track => 
+      track.id === trackId ? {
+        ...track,
+        isFavorite: !wasLiked,
+        staredUsers: !wasLiked 
+          ? [...track.staredUsers, userStore.userId]
+          : track.staredUsers.filter(id => id !== userStore.userId)
+      } : track
+    );
 
-      } catch (error) {
-        // Откат изменений
-        this.rawTracks = originalTracks;
-        this.likedTracks = originalLiked;
-        
-        console.error('Ошибка обновления лайка:', error);
-        throw new Error(wasLiked 
-          ? 'Не удалось убрать лайк' 
-          : 'Не удалось добавить в избранное');
-      }
-    },
+    // Отправка запроса
+    await $fetch(`https://webdev-music-003b5b991590.herokuapp.com/catalog/track/${trackId}/favorite/`, {
+      method: wasLiked ? 'DELETE' : 'POST',
+      headers: {
+        Authorization: `Bearer ${userStore.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId: userStore.userId })
+    });
+
+    // Удаление только на странице избранного
+    if (wasLiked && isFavoritePage) {
+      this.rawTracks = this.rawTracks.filter(t => t.id !== trackId);
+    }
+
+  } catch (error) {
+    // Откат изменений
+    this.likedTracks = originalLiked;
+    this.rawTracks = this.rawTracks.map(track => 
+      track.id === trackId ? {
+        ...track,
+        isFavorite: wasLiked,
+        staredUsers: wasLiked 
+          ? [...track.staredUsers, userStore.userId]
+          : track.staredUsers.filter(id => id !== userStore.userId)
+      } : track
+    );
+    
+    console.error('Ошибка обновления лайка:', error);
+    throw new Error(wasLiked 
+      ? 'Не удалось убрать лайк' 
+      : 'Не удалось добавить в избранное');
+  }
+},
 
     updateFilter(payload) {
       this.filters = updateFilters(this.filters, payload);
@@ -192,12 +203,17 @@ export const useTracksStore = defineStore('tracks', {
   },
 
   getters: {
-    filteredTracks: (state) => {
-      return filterTracks(state.rawTracks, state.filters).map(track => ({
-        ...track,
-        isFavorite: state.likedTracks.has(track.id)
-      }));
-    },
+filteredTracks: (state) => {
+    return filterTracks(state.rawTracks, state.filters).map(track => ({
+      ...track,
+      isFavorite: state.likedTracks.has(track.id)
+    }));
+  },
+  favoriteTracks: (state) => {
+    return state.rawTracks.filter(track => 
+      state.likedTracks.has(track.id)
+    );
+  },
     availableFilters: (state) => getAvailableFilters(state.rawTracks),
   }
 });

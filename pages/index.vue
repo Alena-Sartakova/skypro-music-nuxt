@@ -10,6 +10,7 @@
           :tracks="tracksStore.filteredTracks"
           :pending="tracksStore.pending"
           :error="tracksStore.error"
+           @toggle-favorite="(id) => tracksStore.toggleFavorite(id, false)"
         />
       </div>
     </div>

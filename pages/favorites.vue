@@ -3,20 +3,21 @@
     <h2 class="centerblock__h2">Избранное</h2>
 
     <FilterControlsComponent />
-    
+
     <div v-if="tracksStore.error" class="error-message">
       {{ tracksStore.error }}
     </div>
-    
-    <div v-else-if="tracksStore.rawTracks.length === 0 && !tracksStore.pending">
+
+    <div v-else-if="favoriteTracks.length === 0 && !tracksStore.pending">
       <p>В избранном пока нет треков</p>
     </div>
 
     <div class="tracks-scroll-container">
       <PlaylistComponent
-        :tracks="processedTracks"
+        :tracks="favoriteTracks"
         :pending="tracksStore.pending"
         :error="tracksStore.error"
+        @toggle-favorite="(id) => tracksStore.toggleFavorite(id, true)"
       />
     </div>
   </div>
@@ -34,12 +35,7 @@ const tracksStore = useTracksStore();
 const playerStore = usePlayerStore();
 const userStore = useUserStore();
 
-const processedTracks = computed(() => 
-  tracksStore.filteredTracks.map(t => ({
-    ...t,
-    isFavorite: true // Принудительно устанавливаем для избранного
-  }))
-);
+const favoriteTracks = computed(() => tracksStore.favoriteTracks);
 
 onMounted(async () => {
   try {
@@ -50,7 +46,7 @@ onMounted(async () => {
       return;
     }
 
-/*     console.log("Данные пользователя:", {
+    /*     console.log("Данные пользователя:", {
       email: userStore.user.email,
       id: userStore.user.id,
       token: userStore.accessToken,
@@ -61,13 +57,13 @@ onMounted(async () => {
 
     // Обновление плейлиста плеера
     if (playerStore.playlist.length === 0) {
-      playerStore.setPlaylist(tracksStore.filteredTracks);
+      playerStore.setPlaylist(tracksStore.favoriteTracks);
     }
   } catch (error) {
     console.error("Ошибка загрузки избранного:", error);
     if (error?.response?.status === 401) {
       userStore.clearUser();
-      router.push('/signin');
+      router.push("/signin");
     }
   }
 });

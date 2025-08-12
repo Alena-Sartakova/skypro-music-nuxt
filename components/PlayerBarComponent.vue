@@ -432,7 +432,6 @@ onMounted(() => initPlayer(audioRef.value));
   color: #ffffff;
 }
 
-
 .volume__content {
   display: -webkit-box;
   display: -ms-flexbox;

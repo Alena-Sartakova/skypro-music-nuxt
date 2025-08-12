@@ -15,6 +15,7 @@
           :key="track.id"
           :track="track"
           :playlist="{ id: 'current', tracks: tracks }"
+          @toggle-favorite="(id) => $emit('toggle-favorite', id, props.isFavoritePage)"
         />
       </div>
 
@@ -41,6 +42,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  isFavoritePage: {
+ type: Boolean,
+ default: false
+ }
 });
 const playerStore = usePlayerStore();
 
