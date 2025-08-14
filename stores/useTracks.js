@@ -10,12 +10,15 @@ export const useTracksStore = defineStore('tracks', {
       year: '',
       search: '',
       initialized: false
-    })
+    }),
+     searchQuery: ref('')
   }),
 
   actions: {
    
-
+setSearchQuery(query) {
+      this.searchQuery = query.toLowerCase().trim();
+    }, 
     async fetchTracks() {
       this.pending = true;
       try {
@@ -203,12 +206,22 @@ export const useTracksStore = defineStore('tracks', {
   },
 
   getters: {
-filteredTracks: (state) => {
-    return filterTracks(state.rawTracks, state.filters).map(track => ({
-      ...track,
-      isFavorite: state.likedTracks.has(track.id)
-    }));
-  },
+    filteredTracks: (state) => {
+      return state.rawTracks.filter(track => {
+        // Проверка поискового запроса
+        const searchMatch = !state.searchQuery || 
+          track.title.toLowerCase().includes(state.searchQuery) ||
+          track.author.toLowerCase().includes(state.searchQuery);
+
+        // Проверка существующих фильтров
+        const filterMatch = filterTracks([track], state.filters).length > 0;
+
+        return searchMatch && filterMatch;
+      }).map(track => ({
+        ...track,
+        isFavorite: state.likedTracks.has(track.id)
+      }));
+    },
   favoriteTracks: (state) => {
     return state.rawTracks.filter(track => 
       state.likedTracks.has(track.id)
