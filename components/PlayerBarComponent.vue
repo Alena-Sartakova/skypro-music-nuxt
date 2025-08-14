@@ -79,8 +79,6 @@
                 }}</a>
               </div>
             </div>
-
-
           </div>
         </div>
         <div class="bar__volume-block volume">
@@ -117,7 +115,9 @@
 import { usePlayerStore } from "~/stores/player";
 import { useAudioPlayer } from "~/composables/useAudioPlayer";
 
+
 const playerStore = usePlayerStore();
+
 const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
   useAudioPlayer();
 
@@ -130,12 +130,17 @@ const hasNextTrack = computed(() => {
 const hasPrevTrack = computed(() => {
   return playerStore.hasPrevTrack;
 });
+
 const handlePlay = () => {
   if (!playerStore.currentTrack) return;
 
   if (playerStore.isPlaying) {
     playerStore.pauseTrack();
   } else {
+    // Инициализация плеера при первом клике
+    if (!playerStore.audioRef) {
+      initPlayer(audioRef.value);
+    }
     playerStore.playTrack(playerStore.currentTrack);
   }
 };
@@ -171,8 +176,6 @@ const handlePrevTrack = async () => {
   }
   console.groupEnd();
 };
-
-onMounted(() => initPlayer(audioRef.value));
 </script>
 
 <style lang="scss" scoped>

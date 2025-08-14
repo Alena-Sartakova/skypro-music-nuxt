@@ -68,26 +68,29 @@ const playerStore = usePlayerStore();
 
 const handleTrackClick = async () => {
   try {
-    if (!props.track.track_file) {
+    if (!props.track.track_file) return;
+
+    // Если текущий трек уже играет - ставим на паузу
+    if (isActive.value) {
+      playerStore.pauseTrack();
       return;
     }
 
-    if (!playerStore.audioRef) {
-      playerStore.setAudioRef(new Audio());
+    // Если выбран новый трек
+    if (playerStore.currentTrack?.id !== props.track.id) {
+      await playerStore.playTrack(props.track);
+    } else {
+      // Если это тот же трек - продолжаем воспроизведение
+      await playerStore.resumeTrack();
     }
-
-    playerStore.setCurrentTrack(props.track);
-    playerStore.audioRef.src = props.track.track_file;
-    await playerStore.audioRef.play();
-    playerStore.setPlaying(true);
   } catch (error) {
     console.error("Ошибка воспроизведения:", error);
     playerStore.setPlaying(false);
   }
 };
 
-const isActive = computed(
-  () => playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
+const isActive = computed(() => 
+  playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
 );
 </script>
 

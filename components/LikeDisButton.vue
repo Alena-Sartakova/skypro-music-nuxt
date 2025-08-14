@@ -2,8 +2,7 @@
   <div class="like-container">
     <button
       class="like-button"
-      :class="{ 'is-liked': isLiked }"
-      
+      :class="{ 'is-liked': computedIsLiked }"
       @click="handleLikeClick"
     >
       <svg class="icon-like">
@@ -18,35 +17,39 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
 
 const props = defineProps({
   track: {
     type: Object,
     required: true,
-    validator: t => !!t.id && Array.isArray(t.staredUsers)
+    validator: (t) => !!t.id && Array.isArray(t.staredUsers),
+  },
+  isPlayer: { // новый пропс для плеера
+    type: Boolean,
+    default: false
   }
-})
+});
 
-const tracksStore = useTracksStore()
+const tracksStore = useTracksStore();
+const error = ref(null);
 
-const error = ref(null)
-
-
-const isLiked = computed(() => props.track.isFavorite);
-
-
+// Модифицируем вычисляемое свойство isLiked
+const computedIsLiked = computed(() => {
+  if (props.isPlayer && !playerStore.isPlaying) {
+    return false; // Если в плеере и трек не играет, то не закрашиваем
+  }
+  return props.track.isFavorite;
+});
 
 const handleLikeClick = async () => {
   try {
     await tracksStore.toggleFavorite(props.track.id);
-    // Принудительное обновление списка
     tracksStore.rawTracks = [...tracksStore.rawTracks];
   } catch (err) {
-    error.value = err.message
-    setTimeout(() => error.value = null, 2000)
-  } 
-}
+    error.value = err.message;
+    setTimeout(() => (error.value = null), 2000);
+  }
+};
 </script>
 
 <style scoped>
@@ -55,9 +58,15 @@ const handleLikeClick = async () => {
   --icon-color: #696969;
   --active-color: #ad61ff;
 
-  &.small { --icon-size: 14px; }
-  &.medium { --icon-size: 18px; }
-  &.large { --icon-size: 22px; }
+  &.small {
+    --icon-size: 14px;
+  }
+  &.medium {
+    --icon-size: 18px;
+  }
+  &.large {
+    --icon-size: 22px;
+  }
 }
 
 .like-button {

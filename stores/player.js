@@ -27,7 +27,13 @@ export const usePlayerStore = defineStore("player", {
     },
     activePlaylist(state) {
       return state.isShuffle ? state.shufflePlaylist : state.playlist;
-    }
+    },
+    currentTrackInfo(state) {
+    return state.currentTrack;
+  },
+   getTrackById: (state) => (id) => {
+    return state.rawTracks.find(t => t.id === id) || null;
+  }
   },
 
   actions: {

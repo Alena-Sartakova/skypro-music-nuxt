@@ -190,7 +190,7 @@ export const useTracksStore = defineStore('tracks', {
           rawData.map(track => track.id || track._id)
         );
 
-        console.log('Избранные треки загружены:', this.likedTracks);
+        /* console.log('Избранные треки загружены:', this.likedTracks); */
         
       } catch (error) {
         console.error('Ошибка загрузки избранного:', {
@@ -215,5 +215,6 @@ filteredTracks: (state) => {
     );
   },
     availableFilters: (state) => getAvailableFilters(state.rawTracks),
-  }
+  },
+  
 });
