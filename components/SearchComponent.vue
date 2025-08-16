@@ -1,40 +1,49 @@
 <template>
- <div class="centerblock__search search">
- <svg class="search__svg">
- <use xlink:href="#icon-search" />
- </svg>
- <input
- v-model="searchModel"
- class="search__text"
- type="search"
- placeholder="Поиск"
- @input="handleSearch"
- />
- <button v-if="searchModel" class="search__clear" @click="clearSearch">×</button>
- </div>
+  <div class="centerblock__search search">
+    <svg class="search__svg">
+      <use xlink:href="#icon-search" />
+    </svg>
+    <input
+      v-model="searchInput"
+      class="search__text"
+      placeholder="Поиск..."
+      @input="handleSearch"
+    />
+    <button 
+      v-if="searchInput" 
+      class="search__clear"
+      @click="clearSearch"
+    >
+      ×
+    </button>
+  </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import { useTracksStore } from '~/stores/useTracks';
 
 const tracksStore = useTracksStore();
+let timeout = null;
 
-// Двусторонняя синхронизация
-const searchModel = computed({
- get: () => tracksStore.searchQuery,
- set: (value) => tracksStore.setSearchQuery(value.trim())
+const searchInput = computed({
+  get: () => tracksStore.filters.search,
+  set: (value) => tracksStore.setSearchQuery(value)
 });
 
-const handleSearch = (e) => {
- tracksStore.setSearchQuery(e.target.value.trim());
+const handleSearch = () => {
+  clearTimeout(timeout);
+  timeout = setTimeout(() => {
+    tracksStore.setSearchQuery(searchInput.value);
+  }, 300);
 };
 
 const clearSearch = () => {
- searchModel.value = '';
- tracksStore.setSearchQuery('');
+  clearTimeout(timeout); // Отменяем отложенный запрос
+  tracksStore.resetFilters(); // Полный сброс всех фильтров
+  searchInput.value = ''; // Принудительно обновляем значение
 };
 </script>
+
 
 <style lang="scss" scoped>
 .centerblock__search {

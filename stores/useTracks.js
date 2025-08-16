@@ -4,12 +4,13 @@ export const useTracksStore = defineStore('tracks', {
     likedTracks: new Set(),
     pending: ref(false),
     error: ref(null),
+    favoritesInitialized: false,
 filters: ref({
   authors: [],
   genres: [],
   years: [],
   search: '',
-  initialized: false
+  filtersInitialized: false
 }),
   }),
 
@@ -158,24 +159,47 @@ filters: ref({
       : 'Не удалось добавить в избранное');
   }
 },
+ initFilters() {
+      if (!this.filters.filtersInitialized) {
+        this.filters = {
+          authors: [],
+          genres: [],
+          years: [],
+          search: '',
+          filtersInitialized: true
+        };
+      }  
+    },
 
-updateFilter(payload) {
-  // Полная замена значения фильтра
-  this.filters = {
-    ...this.filters,
-    ...payload,
-    initialized: true
-  };
-},
+     setSearchQuery(query) {
+      this.initFilters();
+      this.filters.search = query.trim().toLowerCase();
+    },
+
+
+    updateFilter(payload) {
+      this.initFilters();
+      this.filters = {
+        ...this.filters,
+        ...payload
+      };
+    },
+
     resetFilters() {
       this.filters = {
         authors: [],
         genres: [],
         years: [],
         search: '',
-        initialized: false
+        filtersInitialized: false
       };
     },
+
+clearSearch() {
+  this.filters.search = '';
+  this.filters.filtersInitialized = false;
+},
+
 
      async initialize(accessToken) {
       try {
@@ -201,7 +225,7 @@ updateFilter(payload) {
         );
 
         console.log('Избранные треки загружены:', this.likedTracks);
-        
+        this.favoritesInitialized = true;
       } catch (error) {
         console.error('Ошибка загрузки избранного:', {
           error,
@@ -213,6 +237,13 @@ updateFilter(payload) {
   },
 
   getters: {
+        hasActiveFilters: (state) => (
+      state.filters.authors.length > 0 ||
+      state.filters.genres.length > 0 ||
+      state.filters.years.length > 0 ||
+      state.filters.search !== ''
+    ),
+
 filteredTracks: (state) => {
       return filterTracks(state.rawTracks, state.filters).map(track => ({
         ...track,
