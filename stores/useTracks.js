@@ -4,21 +4,17 @@ export const useTracksStore = defineStore('tracks', {
     likedTracks: new Set(),
     pending: ref(false),
     error: ref(null),
-    filters: ref({
-      author: '',
-      genre: '',
-      year: '',
-      search: '',
-      initialized: false
-    }),
-     searchQuery: ref('')
+filters: ref({
+  authors: [],
+  genres: [],
+  years: [],
+  search: '',
+  initialized: false
+}),
   }),
 
   actions: {
    
-setSearchQuery(query) {
-      this.searchQuery = query.toLowerCase().trim();
-    }, 
     async fetchTracks() {
       this.pending = true;
       try {
@@ -163,13 +159,24 @@ setSearchQuery(query) {
   }
 },
 
-    updateFilter(payload) {
-      this.filters = updateFilters(this.filters, payload);
+updateFilter(payload) {
+  // Полная замена значения фильтра
+  this.filters = {
+    ...this.filters,
+    ...payload,
+    initialized: true
+  };
+},
+    resetFilters() {
+      this.filters = {
+        authors: [],
+        genres: [],
+        years: [],
+        search: '',
+        initialized: false
+      };
     },
 
-    resetFilters() {
-      this.filters = resetFilters();
-    },
      async initialize(accessToken) {
       try {
         const response = await $fetch(
@@ -193,7 +200,7 @@ setSearchQuery(query) {
           rawData.map(track => track.id || track._id)
         );
 
-        /* console.log('Избранные треки загружены:', this.likedTracks); */
+        console.log('Избранные треки загружены:', this.likedTracks);
         
       } catch (error) {
         console.error('Ошибка загрузки избранного:', {
@@ -206,18 +213,8 @@ setSearchQuery(query) {
   },
 
   getters: {
-    filteredTracks: (state) => {
-      return state.rawTracks.filter(track => {
-        // Проверка поискового запроса
-        const searchMatch = !state.searchQuery || 
-          track.title.toLowerCase().includes(state.searchQuery) ||
-          track.author.toLowerCase().includes(state.searchQuery);
-
-        // Проверка существующих фильтров
-        const filterMatch = filterTracks([track], state.filters).length > 0;
-
-        return searchMatch && filterMatch;
-      }).map(track => ({
+filteredTracks: (state) => {
+      return filterTracks(state.rawTracks, state.filters).map(track => ({
         ...track,
         isFavorite: state.likedTracks.has(track.id)
       }));

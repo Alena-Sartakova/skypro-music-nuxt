@@ -1,41 +1,38 @@
 <template>
-  <div class="centerblock__search search">
-    <svg class="search__svg">
-      <use xlink:href="#icon-search" />
-    </svg>
-    <input
-      v-model="searchQuery"
-      class="search__text"
-      type="search"
-      placeholder="Поиск"
-      name="search"
-      @input="handleSearch"
-    />
-    <button 
-      v-if="searchQuery"
-      class="search__clear"
-      @click="clearSearch"
-    />
-  </div>
+ <div class="centerblock__search search">
+ <svg class="search__svg">
+ <use xlink:href="#icon-search" />
+ </svg>
+ <input
+ v-model="searchModel"
+ class="search__text"
+ type="search"
+ placeholder="Поиск"
+ @input="handleSearch"
+ />
+ <button v-if="searchModel" class="search__clear" @click="clearSearch">×</button>
+ </div>
 </template>
 
 <script setup>
-
+import { computed } from 'vue';
+import { useTracksStore } from '~/stores/useTracks';
 
 const tracksStore = useTracksStore();
-const searchQuery = ref('');
-let timeoutId;
 
-const handleSearch = () => {
-  clearTimeout(timeoutId);
-  timeoutId = setTimeout(() => {
-    tracksStore.setSearchQuery(searchQuery.value.trim());
-  }, 300);
+// Двусторонняя синхронизация
+const searchModel = computed({
+ get: () => tracksStore.searchQuery,
+ set: (value) => tracksStore.setSearchQuery(value.trim())
+});
+
+const handleSearch = (e) => {
+ tracksStore.setSearchQuery(e.target.value.trim());
 };
 
 const clearSearch = () => {
-  searchQuery.value = '';
-  tracksStore.setSearchQuery('');
+ searchModel.value = '';
+ tracksStore.setSearchQuery('');
 };
 </script>
 
@@ -48,12 +45,23 @@ const clearSearch = () => {
   display: flex;
   align-items: center;
   padding-bottom: 10px;
+  transition: border-color 0.3s ease;
+
+  &:focus-within {
+    border-color: #ad61ff;
+
+    .search__svg {
+      fill: #ad61ff;
+    }
+  }
 
   .search__svg {
     width: 17px;
     height: 17px;
     margin-right: 5px;
     flex-shrink: 0;
+    fill: #4e4e4e;
+    transition: fill 0.3s ease;
   }
 
   .search__text {
@@ -64,13 +72,19 @@ const clearSearch = () => {
     color: #fff;
     font-size: 16px;
     line-height: 24px;
+    caret-color: #ad61ff;
 
     &::placeholder {
       color: #4e4e4e;
+      transition: opacity 0.3s ease;
     }
 
     &:focus {
       outline: none;
+
+      &::placeholder {
+        opacity: 0.5;
+      }
     }
   }
 
@@ -82,10 +96,15 @@ const clearSearch = () => {
     line-height: 1;
     padding: 0 5px;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
 
     &:hover {
       color: #fff;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.9);
     }
   }
 }
