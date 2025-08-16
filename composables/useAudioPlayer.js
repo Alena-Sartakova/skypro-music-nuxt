@@ -4,104 +4,50 @@ import { usePlayerStore } from "~/stores/player";
 export const useAudioPlayer = () => {
   const playerStore = usePlayerStore();
 
-  // Инициализация аудио элемента
   const initPlayer = (element) => {
-    if (!element || !playerStore.isPlayerInitialized) return;
-    
-    // Инициализация только при первом подключении
-    if (!playerStore.audioRef) {
-      playerStore.audioRef = element;
-      setupEventListeners();
-      restorePlayerState();
-    }
+    if (!element) return;
+    playerStore.audioRef = element;
+    setupEventListeners();
   };
 
-  // Восстановление предыдущего состояния
-  const restorePlayerState = () => {
-    if (!playerStore.audioRef) return;
-    
-    // Восстановление громкости
-    playerStore.audioRef.volume = playerStore.volume / 100;
-    
-    // Восстановление воспроизведения
-    if (playerStore.currentTrack) {
-      playerStore.audioRef.src = playerStore.currentTrack.track_file;
-      if (playerStore.isPlaying) {
-        playerStore.audioRef.play().catch(error => {
-          console.error("Autoplay failed:", error);
-        });
-      }
-    }
-  };
-
-  // Настройка обработчиков событий
   const setupEventListeners = () => {
-    const audio = playerStore.audioRef;
-    if (!audio) return;
-
-    // Очистка старых обработчиков
-    audio.removeEventListener('timeupdate', handleTimeUpdate);
-    audio.removeEventListener('ended', handleTrackEnd);
-
-    // Добавление новых обработчиков
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('ended', handleTrackEnd);
-  };
-
-  // Обновление прогресса воспроизведения
-  const handleTimeUpdate = () => {
-    const audio = playerStore.audioRef;
-    if (!audio || !playerStore.currentTrack) return;
-
-    const duration = audio.duration;
-    if (duration && duration > 0) {
-      const progress = (audio.currentTime / duration) * 100;
-      playerStore.setProgress(progress);
-      playerStore.setCurrentTime(audio.currentTime);
-    }
-  };
-
-  // Обработка окончания трека
-  const handleTrackEnd = async () => {
     if (!playerStore.audioRef) return;
+    
+    playerStore.audioRef.addEventListener('timeupdate', handleTimeUpdate);
+    playerStore.audioRef.addEventListener('ended', handleTrackEnd);
+  };
 
-    if (playerStore.isLoop) {
-      playerStore.audioRef.currentTime = 0;
-      try {
-        await playerStore.audioRef.play();
-      } catch (error) {
-        console.error("Loop play failed:", error);
-      }
-    } else {
-      await playerStore.nextTrack();
-      if (playerStore.currentTrack && playerStore.audioRef) {
-        try {
-          await playerStore.audioRef.play();
-        } catch (error) {
-          console.error("Next track play failed:", error);
-        }
-      }
+  const handleTimeUpdate = () => {
+    if (!playerStore.audioRef || !playerStore.currentTrack) return;
+    
+    const currentTime = playerStore.audioRef.currentTime;
+    const duration = playerStore.audioRef.duration;
+    
+    if (duration) {
+      playerStore.setProgress((currentTime / duration) * 100);
+      playerStore.setCurrentTime(currentTime);
     }
   };
 
-  // Перемотка трека
+const handleTrackEnd = () => {
+  if (playerStore.isLoop) {
+    playerStore.audioRef.currentTime = 0;
+    playerStore.audioRef.play();
+  } else {
+    playerStore.nextTrack();
+  }
+}
+
   const seekTo = (percentage) => {
-    const audio = playerStore.audioRef;
-    if (!audio || !playerStore.currentTrack) return;
-
-    const newTime = (percentage / 100) * audio.duration;
-    if (!isNaN(newTime)) {
-      audio.currentTime = newTime;
-    }
+    if (!playerStore.audioRef || !playerStore.currentTrack) return;
+    
+    const newTime = (percentage / 100) * playerStore.audioRef.duration;
+    playerStore.audioRef.currentTime = newTime;
   };
 
-  // Обновление громкости
   const updateVolume = () => {
-    const audio = playerStore.audioRef;
-    if (!audio) return;
-
-    const normalizedVolume = Math.min(Math.max(playerStore.volume / 100, 0), 1);
-    audio.volume = normalizedVolume;
+    if (!playerStore.audioRef) return;
+    playerStore.audioRef.volume = playerStore.volume / 100;
   };
 
   return {

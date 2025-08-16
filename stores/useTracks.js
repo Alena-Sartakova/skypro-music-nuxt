@@ -224,7 +224,6 @@ clearSearch() {
           rawData.map(track => track.id || track._id)
         );
 
-        console.log('Избранные треки загружены:', this.likedTracks);
         this.favoritesInitialized = true;
       } catch (error) {
         console.error('Ошибка загрузки избранного:', {
