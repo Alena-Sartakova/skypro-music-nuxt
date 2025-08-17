@@ -11,7 +11,7 @@ export const usePlayerStore = defineStore('player', {
     isShuffle: false,
     isLoop: false,
     originalPlaylist: [],
-    shufflePlaylist: []
+    shufflePlaylist: [],
   }),
 
   getters: {
@@ -28,7 +28,29 @@ export const usePlayerStore = defineStore('player', {
     },
     currentTrackInfo(state) {
       return state.currentTrack;
+    },
+isTrackLiked: (state) => {
+    const tracksStore = useTracksStore();
+    return state.currentTrack 
+      ? tracksStore.likedTracks.has(state.currentTrack.id) 
+      : false;
+  },
+  
+  // Добавляем логирование текущего трека
+  logCurrentTrack: (state) => {
+    if (process.env.NODE_ENV === 'development') {
+      if (state.currentTrack) {
+        console.groupCollapsed('Текущий трек в плеере');
+        console.log('ID:', state.currentTrack.id);
+        console.log('Название:', state.currentTrack.title);
+        console.log('Исполнитель:', state.currentTrack.author);
+        console.log('В избранном:', state.isTrackLiked);
+        console.groupEnd();
+      } else {
+        console.log('Трек не выбран');
+      }
     }
+  }
   },
 
   actions: {
@@ -66,20 +88,17 @@ export const usePlayerStore = defineStore('player', {
       return shuffled;
     },
 
-      syncCurrentTrackIndex() {
+       syncCurrentTrackIndex() {
       if (this.activePlaylist.length === 0) {
-      this.currentTrackIndex = -1;
-      return;
+        this.currentTrackIndex = -1;
+        return;
       }
       
-      if (!this.currentTrack) {
-      this.currentTrack = this.activePlaylist[0];
-      }
-
+      // Убрана автоматическая установка первого трека
       this.currentTrackIndex = this.activePlaylist.findIndex(
         t => t.id === this.currentTrack?.id
       );
-      },
+    },
 
     async playTrack(track) {
       try {

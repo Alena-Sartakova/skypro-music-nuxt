@@ -36,7 +36,13 @@
       </div>
       <div class="track__time">
         <!-- компонент лайка  -->
-        <LikeDisButton :track="track" class="track__like-button" />
+        <LikeDisButton
+          :show-count="true"
+          :track="track"
+          :is-favorite-page="isFavoritePage"
+          class="track__like-button"
+          @toggle-favorite="handleToggleFavorite"
+        />
         <span class="track__time-text">{{ track.duration }}</span>
       </div>
     </div>
@@ -60,14 +66,32 @@ const props = defineProps({
       genre: "",
       year: 0,
       track_file: "",
-    }),
+    })
   },
+  isFavoritePage: { // Теперь это отдельный пропс
+    type: Boolean,
+    default: false
+  }
 });
+const emit = defineEmits(["toggle-favorite"]);
+
+const handleToggleFavorite = (trackId, isFavorite) => {
+  emit('toggle-favorite', trackId, isFavorite);
+};
 
 const playerStore = usePlayerStore();
+const tracksStore = useTracksStore();
 
 const handleTrackClick = async () => {
   try {
+    if (import.meta.env.DEV) {
+      console.groupCollapsed(`Track click: ${props.track.title}`);
+      console.log("Track ID:", props.track.id);
+      console.log("Track object:", props.track);
+      console.log("Is liked:", tracksStore.likedTracks.has(props.track.id));
+      console.log("Track file:", props.track.track_file);
+      console.groupEnd();
+    }
     if (!props.track.track_file) return;
 
     // Если текущий трек уже играет - ставим на паузу
@@ -89,9 +113,11 @@ const handleTrackClick = async () => {
   }
 };
 
-const isActive = computed(() => 
-  playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
+const isActive = computed(
+  () => playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
 );
+
+
 </script>
 
 <style lang="scss" scoped>

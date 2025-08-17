@@ -17,7 +17,10 @@
         :tracks="favoriteTracks"
         :pending="tracksStore.pending"
         :error="tracksStore.error"
-        @toggle-favorite="(id) => tracksStore.toggleFavorite(id, true)"
+        :is-favorite-page="true"
+        @toggle-favorite="
+          (id, isFavorite) => tracksStore.toggleFavorite(id, isFavorite)
+        "
       />
     </div>
   </div>

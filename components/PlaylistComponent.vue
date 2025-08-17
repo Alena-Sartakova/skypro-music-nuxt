@@ -46,7 +46,8 @@
           :key="track.id"
           :track="track"
           :playlist="{ id: playlistId, tracks: filteredTracks }"
-          @toggle-favorite="handleToggleFavorite"
+          :is-favorite-page="isFavoritePage"
+           @toggle-favorite="handleToggleFavorite"
         />
       </div>
 
@@ -72,8 +73,8 @@
         <template v-else> 😔 В этой категории пока нет треков </template>
         <button
           v-if="hasActiveFilters"
-          @click="clearAllFilters"
           class="retry-button"
+          @click="clearAllFilters"
         >
           Сбросить фильтры
         </button>
@@ -90,7 +91,16 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["toggle-favorite"]);
+const emit = defineEmits({
+  'toggle-favorite': (id, isFavorite) => 
+    typeof id === 'number' && typeof isFavorite === 'boolean'
+});
+
+const handleToggleFavorite = (trackId) => {
+  emit('toggle-favorite', trackId, props.isFavoritePage);
+};
+
+
 
 const tracksStore = useTracksStore();
 const playerStore = usePlayerStore();
@@ -155,9 +165,6 @@ const hasActiveFilters = computed(
 );
 
 // Методы
-const handleToggleFavorite = (trackId) => {
-  emit("toggle-favorite", trackId, props.isFavoritePage);
-};
 
 const removeFilter = (type, value) => {
   if (type === "search") {

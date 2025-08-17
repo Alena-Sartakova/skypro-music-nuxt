@@ -2,7 +2,7 @@
   <div class="like-container">
     <button
       class="like-button"
-      :class="{ 'is-liked': computedIsLiked }"
+      :class="{ 'is-liked': computedIsLiked, 'in-favorites': isFavoritePage }"
       @click="handleLikeClick"
     >
       <svg class="icon-like">
@@ -17,37 +17,59 @@
 </template>
 
 <script setup>
-
 const props = defineProps({
   track: {
     type: Object,
     required: true,
     validator: (t) => !!t.id && Array.isArray(t.staredUsers),
   },
-  isPlayer: { // новый пропс для плеера
+  showCount: Boolean,
+  isFavoritePage: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+    required: true,
+  },
 });
 
+const emit = defineEmits(["toggle-favorite"]);
 const tracksStore = useTracksStore();
 const error = ref(null);
+const isLoading = ref(false);
 
-// Модифицируем вычисляемое свойство isLiked
-const computedIsLiked = computed(() => {
-  if (props.isPlayer && !playerStore.isPlaying) {
-    return false; // Если в плеере и трек не играет, то не закрашиваем
-  }
-  return props.track.isFavorite;
-});
+const computedIsLiked = computed(() =>
+  tracksStore.likedTracks.has(props.track.id)
+);
 
 const handleLikeClick = async () => {
   try {
-    await tracksStore.toggleFavorite(props.track.id);
-    tracksStore.rawTracks = [...tracksStore.rawTracks];
+    isLoading.value = true;
+    error.value = null;
+
+    // Блокируем множественные клики
+    const wasLiked = computedIsLiked.value;
+
+    // Отправляем событие
+    await emit("toggle-favorite", props.track.id, props.isFavoritePage);
+
+    // Ждем завершения операции
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Проверяем результат
+    if (wasLiked && !computedIsLiked.value && props.isFavoritePage) {
+      // Если трек был удален из избранного
+      tracksStore.removeFromFavorites(props.track.id);
+    }
   } catch (err) {
-    error.value = err.message;
-    setTimeout(() => (error.value = null), 2000);
+    error.value = "Ошибка при обновлении лайка";
+    console.error("Ошибка обработки лайка:", err);
+  } finally {
+    isLoading.value = false;
+    // Скрываем ошибку через 2 секунды
+    if (error.value) {
+      setTimeout(() => {
+        if (error.value) error.value = null;
+      }, 2000);
+    }
   }
 };
 </script>
