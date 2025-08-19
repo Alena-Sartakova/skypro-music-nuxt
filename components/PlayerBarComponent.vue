@@ -81,16 +81,7 @@
             </div>
 
             <div class="track-play__like-dis">
-              <div class="track-play__like _btn-icon">
-                <svg class="track-play__like-svg">
-                  <use xlink:href="#icon-like"></use>
-                </svg>
-              </div>
-              <div class="track-play__dislike _btn-icon">
-                <svg class="track-play__dislike-svg">
-                  <use xlink:href="#icon-dislike"></use>
-                </svg>
-              </div>
+
             </div>
           </div>
         </div>
@@ -127,12 +118,31 @@
 <script setup>
 import { usePlayerStore } from "~/stores/player";
 import { useAudioPlayer } from "~/composables/useAudioPlayer";
-
+provide('inPlayer', true);
 const playerStore = usePlayerStore();
+const tracksStore = useTracksStore();
+
 const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
   useAudioPlayer();
 
+
 const audioRef = ref(null);
+
+watch(() => playerStore.currentTrack, (newTrack, oldTrack) => {
+  if (import.meta.env.DEV) {
+    console.groupCollapsed('[Player] Track Update');
+    console.log('Previous track:', oldTrack);
+    console.log('New track:', newTrack);
+    
+    if (newTrack) {
+      console.log('Like status:', tracksStore.likedTracks.has(newTrack.id));
+      console.log('Audio URL:', newTrack.track_file);
+      console.log('Duration:', newTrack.duration);
+    }
+    
+    console.groupEnd();
+  }
+});
 
 const hasNextTrack = computed(() => {
   return playerStore.hasNextTrack;
@@ -160,14 +170,12 @@ const handleProgressClick = (event) => {
 const handleNextTrack = async () => {
   try {
     await playerStore.nextTrack();
-
     if (playerStore.audioRef) {
       await playerStore.audioRef.play();
     }
   } catch (error) {
     console.error("Error:", error);
   }
-  console.groupEnd();
 };
 
 const handlePrevTrack = async () => {
@@ -183,7 +191,9 @@ const handlePrevTrack = async () => {
   console.groupEnd();
 };
 
-onMounted(() => initPlayer(audioRef.value));
+onMounted(() => {
+  initPlayer(audioRef.value);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -282,7 +292,7 @@ onMounted(() => initPlayer(audioRef.value));
   padding: 5px;
   display: flex;
   align-items: center;
-  transition: all 0.3s ease; 
+  transition: all 0.3s ease;
 }
 
 .player__btn-prev {
@@ -318,7 +328,7 @@ onMounted(() => initPlayer(audioRef.value));
 
 .player__btn-repeat {
   margin-right: 24px;
-  
+
   // Иконка повтора
   &-svg {
     width: 18px;
@@ -357,12 +367,11 @@ onMounted(() => initPlayer(audioRef.value));
   svg {
     filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
   }
-  
+
   &:hover {
     transform: scale(1.05);
   }
 }
-
 
 .player__track-play {
   display: -webkit-box;

@@ -1,32 +1,75 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { 
-  formatDuration,
-  filterTracks,
-  getAvailableFilters,
-  updateFilters,
-  resetFilters
-} from '@/utils/tracksUtils'
-
 export const useTracksStore = defineStore('tracks', {
   state: () => ({
-    rawTracks: ref([]),
-    pending: ref(false),
-    error: ref(null),
-    filters: ref({
-      author: '',
-      genre: '',
-      year: '',
-      search: ''
-    })
+    rawTracks: [],
+    likedTracks: new Set(),
+    pending: false,
+    error: null,
+    favoritesOnly: false,
+    favoritesInitialized: false,
+    filters: {
+      authors: [],
+      genres: [],
+      years: [],
+      search: '',
+      filtersInitialized: false
+    }
   }),
 
   actions: {
     async fetchTracks() {
-      this.pending = true
+      this.pending = true;
       try {
-        const { data } = await $fetch('https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/', { lazy: true })
-        this.rawTracks = data.map(track => ({
+        const userStore = useUserStore();
+        const { data } = await $fetch(
+          'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/', 
+          { lazy: true }
+        );
+
+        const rawData = data?.data || data || [];
+        
+        this.rawTracks = rawData.map(track => {
+          const isLiked = userStore.isAuth && track.staredUser?.includes(userStore.userId);
+          if (isLiked) this.likedTracks.add(track._id);
+
+          return {
+            id: track._id,
+            title: track.name || "Без названия",
+            author: track.author || "Неизвестный исполнитель",
+            album: track.album || "Без альбома",
+            duration: formatDuration(track.duration_in_seconds),
+            release_date: track.release_date?.slice(0,4) || "Неизвестно",
+            genre: Array.isArray(track.genre) ? track.genre : [track.genre || "Неизвестно"],
+            track_file: track.track_file || "",
+            staredUsers: track.staredUser || [],
+            isFavorite: isLiked
+          };
+        });
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.pending = false;
+      }
+    },
+
+    async fetchFavoriteTracks() {
+      try {
+        this.pending = true;
+        const userStore = useUserStore();
+        
+        const response = await $fetch(
+          'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/favorite/all/', 
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${userStore.accessToken}`
+            }
+          }
+        );
+
+        const rawData = response?.data || response?.results || response;
+        if (!Array.isArray(rawData)) throw new Error('Неверный формат данных');
+
+        this.rawTracks = rawData.map(track => ({
           id: track._id,
           title: track.name || "Без названия",
           author: track.author || "Неизвестный исполнитель",
@@ -34,27 +77,182 @@ export const useTracksStore = defineStore('tracks', {
           duration: formatDuration(track.duration_in_seconds),
           release_date: track.release_date?.slice(0,4) || "Неизвестно",
           genre: Array.isArray(track.genre) ? track.genre : [track.genre || "Неизвестно"],
-          track_file: track.track_file || ""
-        }))
-      } catch (err) {
-        this.error = err.message
+          track_file: track.track_file || "",
+          staredUsers: track.staredUser || [],
+          isFavorite: true
+        }));
+
+        this.likedTracks = new Set(rawData.map(t => t._id));
+        this.favoritesInitialized = true;
+        this.error = null;
+
+      } catch (error) {
+        console.error('Ошибка загрузки избранного:', error);
+        this.error = error.data?.message || error.message;
+        this.rawTracks = [];
       } finally {
-        this.pending = false
+        this.pending = false;
       }
     },
 
+async toggleFavorite(trackId, isFavoritePage = false) {
+  const userStore = useUserStore();
+  if (!userStore.isAuth) {
+    this.error = 'Требуется авторизация';
+    return;
+  }
+
+  const originalLiked = new Set(this.likedTracks);
+  const wasLiked = originalLiked.has(trackId);
+
+  try {
+    // Отправляем запрос на сервер
+    await $fetch(`https://webdev-music-003b5b991590.herokuapp.com/catalog/track/${trackId}/favorite/`, {
+      method: wasLiked ? 'DELETE' : 'POST',
+      headers: {
+        Authorization: `Bearer ${userStore.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId: userStore.userId })
+    });
+
+    // Обновляем состояние после успешного ответа
+    if (wasLiked) {
+      this.likedTracks.delete(trackId);
+      // Удаляем трек только на странице избранного
+      if (isFavoritePage) {
+        this.rawTracks = this.rawTracks.filter(t => t.id !== trackId);
+      } else {
+        // Обновляем только статус трека
+        this.rawTracks = this.rawTracks.map(track => 
+          track.id === trackId ? {
+            ...track,
+            isFavorite: false,
+            staredUsers: track.staredUsers.filter(id => id !== userStore.userId)
+          } : track
+        );
+      }
+    } else {
+      this.likedTracks.add(trackId);
+      this.rawTracks = this.rawTracks.map(track => 
+        track.id === trackId ? {
+          ...track,
+          isFavorite: true,
+          staredUsers: [...track.staredUsers, userStore.userId]
+        } : track
+      );
+    }
+  } catch (error) {
+    // Откат изменений при ошибке
+    this.likedTracks = originalLiked;
+    this.rawTracks = this.rawTracks.map(track => 
+      track.id === trackId ? {
+        ...track,
+        isFavorite: wasLiked,
+        staredUsers: wasLiked 
+          ? [...track.staredUsers, userStore.userId]
+          : track.staredUsers.filter(id => id !== userStore.userId)
+      } : track
+    );
+    
+    console.error('Ошибка обновления лайка:', error);
+    throw new Error(wasLiked 
+      ? 'Не удалось убрать лайк' 
+      : 'Не удалось добавить в избранное');
+  } finally {
+    this.error = null; // Сброс ошибки после завершения операции
+  }
+},
+
+    initFilters() {
+      if (!this.filters.filtersInitialized) {
+        this.filters = {
+          authors: [],
+          genres: [],
+          years: [],
+          search: '',
+          filtersInitialized: true
+        };
+      }  
+    },
+
+    setSearchQuery(query) {
+      this.initFilters();
+      this.filters.search = query.trim().toLowerCase();
+    },
+
     updateFilter(payload) {
-      this.filters = updateFilters(this.filters, payload)
+      this.initFilters();
+      this.filters = {
+        ...this.filters,
+        ...payload
+      };
     },
 
     resetFilters() {
-      this.filters = resetFilters()
+      this.filters = {
+        authors: [],
+        genres: [],
+        years: [],
+        search: '',
+        filtersInitialized: false
+      };
+    },
+
+    clearSearch() {
+      this.filters.search = '';
+      this.filters.filtersInitialized = false;
+    },
+
+    async initialize(accessToken) {
+      try {
+        const response = await $fetch(
+          'https://webdev-music-003b5b991590.herokuapp.com/catalog/track/favorite/all/', 
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          }
+        );
+
+        const rawData = response?.data || response?.results || response;
+        if (!Array.isArray(rawData)) {
+          throw new Error('Некорректный формат ответа сервера');
+        }
+
+        this.likedTracks = new Set(
+          rawData.map(track => track.id || track._id)
+        );
+        this.favoritesInitialized = true;
+      } catch (error) {
+        console.error('Ошибка загрузки избранного:', error);
+        throw new Error('Не удалось загрузить избранные треки');
+      }
     }
   },
 
   getters: {
-    filteredTracks: (state) => filterTracks(state.rawTracks, state.filters),
-    
+    hasActiveFilters: (state) => (
+      state.filters.authors.length > 0 ||
+      state.filters.genres.length > 0 ||
+      state.filters.years.length > 0 ||
+      state.filters.search !== ''
+    ),
+
+    filteredTracks: (state) => {
+      return filterTracks(state.rawTracks, state.filters).map(track => ({
+        ...track,
+        isFavorite: state.likedTracks.has(track.id)
+      }));
+    },
+
+favoriteTracks: (state) => {
+    return state.rawTracks.filter(track => 
+      state.likedTracks.has(track.id) && track.isFavorite
+    );
+  },
+
     availableFilters: (state) => getAvailableFilters(state.rawTracks)
   }
-})
+});
+

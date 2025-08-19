@@ -1,6 +1,4 @@
-import { defineStore } from "pinia";
-
-export const usePlayerStore = defineStore("player", {
+export const usePlayerStore = defineStore('player', {
   state: () => ({
     currentTrack: null,
     playlist: [],
@@ -13,7 +11,7 @@ export const usePlayerStore = defineStore("player", {
     isShuffle: false,
     isLoop: false,
     originalPlaylist: [],
-    shufflePlaylist: []
+    shufflePlaylist: [],
   }),
 
   getters: {
@@ -23,11 +21,36 @@ export const usePlayerStore = defineStore("player", {
     },
     hasNextTrack(state) {
       if (state.isLoop) return true;
-      return state.currentTrackIndex < this.activePlaylist.length - 1;
+      return state.currentTrackIndex < state.activePlaylist.length - 1;
     },
     activePlaylist(state) {
       return state.isShuffle ? state.shufflePlaylist : state.playlist;
+    },
+    currentTrackInfo(state) {
+      return state.currentTrack;
+    },
+isTrackLiked: (state) => {
+    const tracksStore = useTracksStore();
+    return state.currentTrack 
+      ? tracksStore.likedTracks.has(state.currentTrack.id) 
+      : false;
+  },
+  
+  // Добавляем логирование текущего трека
+  logCurrentTrack: (state) => {
+    if (process.env.NODE_ENV === 'development') {
+      if (state.currentTrack) {
+        console.groupCollapsed('Текущий трек в плеере');
+        console.log('ID:', state.currentTrack.id);
+        console.log('Название:', state.currentTrack.title);
+        console.log('Исполнитель:', state.currentTrack.author);
+        console.log('В избранном:', state.isTrackLiked);
+        console.groupEnd();
+      } else {
+        console.log('Трек не выбран');
+      }
     }
+  }
   },
 
   actions: {
@@ -36,12 +59,17 @@ export const usePlayerStore = defineStore("player", {
       this.currentTrackIndex = this.activePlaylist.findIndex(t => t.id === track.id);
     },
 
-    setPlaylist(tracks) {
-      this.playlist = Array.isArray(tracks) ? tracks : [tracks];
+      setPlaylist(tracks) {
+      const rawTracks = tracks?.tracks || tracks;
+      
+      this.playlist = Array.isArray(rawTracks) 
+        ? [...rawTracks] 
+        : [];
+      
       this.originalPlaylist = [...this.playlist];
       this.shufflePlaylist = this.shuffleArray([...this.playlist]);
       this.syncCurrentTrackIndex();
-    },
+      },
 
     toggleShuffle() {
       this.isShuffle = !this.isShuffle;
@@ -49,10 +77,6 @@ export const usePlayerStore = defineStore("player", {
         this.shufflePlaylist = this.shuffleArray([...this.playlist]);
       }
       this.syncCurrentTrackIndex();
-    },
-
-    toggleLoop() {
-      this.isLoop = !this.isLoop;
     },
 
     shuffleArray(array) {
@@ -64,10 +88,16 @@ export const usePlayerStore = defineStore("player", {
       return shuffled;
     },
 
-    syncCurrentTrackIndex() {
+       syncCurrentTrackIndex() {
+      if (this.activePlaylist.length === 0) {
+        this.currentTrackIndex = -1;
+        return;
+      }
+      
+      // Убрана автоматическая установка первого трека
       this.currentTrackIndex = this.activePlaylist.findIndex(
         t => t.id === this.currentTrack?.id
-      ) || 0;
+      );
     },
 
     async playTrack(track) {
@@ -87,8 +117,9 @@ export const usePlayerStore = defineStore("player", {
         await this.audioRef.play();
         this.isPlaying = true;
       } catch (error) {
-        console.error("Play error:", error);
+        console.error('Ошибка воспроизведения:', error);
         this.isPlaying = false;
+        await this.nextTrack();
       }
     },
 

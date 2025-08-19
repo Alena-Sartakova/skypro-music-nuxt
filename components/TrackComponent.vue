@@ -1,21 +1,22 @@
 <template>
-  <div class="playlist__item" @click="handleTrackClick">
+  <div class="playlist__item">
     <div class="playlist__track track">
       <div class="track__title">
         <div class="track__title-image">
-           <div 
-            v-if="isActive"
-            class="playing-dot"
-          ></div>
-          <svg class="track__title-svg" :class="{ 'active-track': isActive }">
+          <div v-if="isActive" class="playing-dot"></div>
+          <svg
+            class="track__title-svg"
+            :class="{ 'active-track': isActive }"
+            @click="handleTrackClick"
+          >
             <use xlink:href="#icon-note"></use>
           </svg>
         </div>
         <div class="track__title-text">
           <a class="track__title-link" href="#">
             {{ track.title }}
-            <span 
-              v-if="track.title && track.title.includes('(Remix)')" 
+            <span
+              v-if="track.title && track.title.includes('(Remix)')"
               class="track__title-span"
             >
               (Remix)
@@ -24,22 +25,24 @@
         </div>
       </div>
       <div class="track__author">
-        <a 
-          class="track__author-link" 
-          href="#"
-        >
-          {{ track.author || 'Неизвестный исполнитель' }}
+        <a class="track__author-link" href="#">
+          {{ track.author || "Неизвестный исполнитель" }}
         </a>
       </div>
       <div class="track__album">
         <a class="track__album-link" href="#">
-          {{ track.album || 'Без альбома' }}
+          {{ track.album || "Без альбома" }}
         </a>
       </div>
       <div class="track__time">
-        <svg class="track__time-svg">
-          <use xlink:href="#icon-like"></use>
-        </svg>
+        <!-- компонент лайка  -->
+        <LikeDisButton
+          :show-count="true"
+          :track="track"
+          :is-favorite-page="isFavoritePage"
+          class="track__like-button"
+          @toggle-favorite="handleToggleFavorite"
+        />
         <span class="track__time-text">{{ track.duration }}</span>
       </div>
     </div>
@@ -47,56 +50,77 @@
 </template>
 
 <script setup>
+import LikeDisButton from "./LikeDisButton.vue";
+
 // Объявляем props
 const props = defineProps({
- track: {
- type: Object,
- required: true,
- default: () => ({
- id: 0,
- title: '',
- author: '', 
- album: '',
- duration: '',
- genre: '',
- year: 0,
- track_file: ''
- })
- }
+  track: {
+    type: Object,
+    required: true,
+    default: () => ({
+      id: 0,
+      title: "",
+      author: "",
+      album: "",
+      duration: "",
+      genre: "",
+      year: 0,
+      track_file: "",
+    })
+  },
+  isFavoritePage: { // Теперь это отдельный пропс
+    type: Boolean,
+    default: false
+  }
 });
+const emit = defineEmits(["toggle-favorite"]);
 
-const playerStore = usePlayerStore();
-
-const handleTrackClick = async () => {
- try {
-
- if (!props.track.track_file) {
- return;
- }
-
- if (!playerStore.audioRef) {
- playerStore.setAudioRef(new Audio());
- }
-
- playerStore.setCurrentTrack(props.track);
- playerStore.audioRef.src = props.track.track_file;
- await playerStore.audioRef.play();
- playerStore.setPlaying(true);
-
- } catch (error) {
- console.error('Ошибка воспроизведения:', error); 
- playerStore.setPlaying(false);
- }
+const handleToggleFavorite = (trackId, isFavorite) => {
+  emit('toggle-favorite', trackId, isFavorite);
 };
 
-const isActive = computed(() => 
-  playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
+const playerStore = usePlayerStore();
+const tracksStore = useTracksStore();
+
+const handleTrackClick = async () => {
+  try {
+    if (import.meta.env.DEV) {
+      console.groupCollapsed(`Track click: ${props.track.title}`);
+      console.log("Track ID:", props.track.id);
+      console.log("Track object:", props.track);
+      console.log("Is liked:", tracksStore.likedTracks.has(props.track.id));
+      console.log("Track file:", props.track.track_file);
+      console.groupEnd();
+    }
+    if (!props.track.track_file) return;
+
+    // Если текущий трек уже играет - ставим на паузу
+    if (isActive.value) {
+      playerStore.pauseTrack();
+      return;
+    }
+
+    // Если выбран новый трек
+    if (playerStore.currentTrack?.id !== props.track.id) {
+      await playerStore.playTrack(props.track);
+    } else {
+      // Если это тот же трек - продолжаем воспроизведение
+      await playerStore.resumeTrack();
+    }
+  } catch (error) {
+    console.error("Ошибка воспроизведения:", error);
+    playerStore.setPlaying(false);
+  }
+};
+
+const isActive = computed(
+  () => playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
 );
+
+
 </script>
 
-
 <style lang="scss" scoped>
-
 .playlist__track {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -159,8 +183,13 @@ const isActive = computed(() =>
 }
 
 @keyframes bubble_out {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.5); }
-  50% { transform: translate(-50%, -50%) scale(1); }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .track__title-svg {
@@ -232,5 +261,14 @@ const isActive = computed(() =>
   line-height: 24px;
   text-align: right;
   color: #696969;
+}
+.track__time {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Добавили отступы между компонентами */
+}
+
+.track__like-button {
+  margin-right: 10px; /* Отступ перед временем трека */
 }
 </style>

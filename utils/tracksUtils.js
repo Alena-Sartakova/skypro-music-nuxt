@@ -9,19 +9,26 @@ export const formatDuration = (seconds) => {
 }
 
 export const filterTracks = (tracks, filters = {}) => {
-const safeFilters = filters || {};
- const searchLower = safeFilters.search?.toLowerCase() || '';
- 
- return tracks.filter(track => {
-   const matchesSearch = 
-     track.title.toLowerCase().includes(searchLower) ||
-     track.author.toLowerCase().includes(searchLower);
-   
-   const matchesAuthor = !safeFilters.author || track.author === safeFilters.author;
-   const matchesYear = !safeFilters.year || track.release_date === safeFilters.year;
-   const matchesGenre = !safeFilters.genre || track.genre.includes(safeFilters.genre);
+  const {
+    authors = [],
+    genres = [],
+    years = [],
+    search = ''
+  } = filters;
 
-   return matchesSearch && matchesAuthor && matchesYear && matchesGenre;
+  const searchLower = search.toLowerCase();
+  
+  return tracks.filter(track => {
+    const matchesSearch = 
+      track.title.toLowerCase().includes(searchLower) ||
+      track.author.toLowerCase().includes(searchLower);
+    
+    // Исправлены условия проверки
+    const matchesAuthor = authors.length === 0 || authors.includes(track.author);
+    const matchesYear = years.length === 0 || years.includes(track.release_date);
+    const matchesGenre = genres.length === 0 || track.genre.some(g => genres.includes(g));
+
+    return matchesSearch && matchesAuthor && matchesYear && matchesGenre;
   });
 }
 
